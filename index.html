@@ -1920,25 +1920,40 @@ function _pndDashboardSupervisor(cu, visiblePeople, thisMonday, isAdmin){
   return h;
 }
 
-/* Review status for a person's quarterly or annual: is the current period's
-   review complete (archived), in progress (record exists, not archived), or
-   not started. Returns { cls, lbl } for a status chip. */
+/* Review status for a person's quarterly or annual: complete (archived),
+   in progress (signatures started), or not started - now schedule-aware.
+   If a review date is set and has passed without completion, the chip goes
+   red Overdue with the missed date. Returns { cls, lbl }. */
 function _pndReviewStatus(person, kind){
   var now = new Date();
+  var todayIso = isoDate(now);
+  function withSchedule(base, period){
+    var rd = getReviewDate(person.id, kind, period);
+    if(!rd || !rd.date) return base;
+    if(base.cls === 'c-grn') return base;                       /* complete - schedule no longer matters */
+    if(rd.date < todayIso){
+      return { cls:'c-red', lbl:'Overdue - was '+_pndFormatDateShort(rd.date) };
+    }
+    return { cls: base.cls, lbl: base.lbl+' - '+_pndFormatDateShort(rd.date) };
+  }
   if(kind === 'quarterly'){
     var y = currentYearOf(now), q = currentQuarterOf(now);
     var m = _pndLoadQuarterly();
     var rec = m[qKey(person.id, y, q)];
-    if(rec && rec.archivedAt) return { cls:'c-grn', lbl:q+' '+y+' complete' };
-    if(rec && (rec.approvals && Object.keys(rec.approvals).some(function(k){return rec.approvals[k].signedAt;}))) return { cls:'c-amb', lbl:q+' '+y+' in progress' };
-    return { cls:'c-gry', lbl:q+' '+y+' not started' };
+    var base;
+    if(rec && rec.archivedAt) base = { cls:'c-grn', lbl:q+' '+y+' complete' };
+    else if(rec && (rec.approvals && Object.keys(rec.approvals).some(function(k){return rec.approvals[k].signedAt;}))) base = { cls:'c-amb', lbl:q+' '+y+' in progress' };
+    else base = { cls:'c-gry', lbl:q+' '+y+' not started' };
+    return withSchedule(base, y+'-'+q);
   } else {
     var yr = currentYearOf(now);
     var am = _pndLoadAnnual();
     var arec = am[aKey(person.id, yr)];
-    if(arec && arec.archivedAt) return { cls:'c-grn', lbl:yr+' complete' };
-    if(arec && (arec.approvals && Object.keys(arec.approvals).some(function(k){return arec.approvals[k].signedAt;}))) return { cls:'c-amb', lbl:yr+' in progress' };
-    return { cls:'c-gry', lbl:yr+' not started' };
+    var abase;
+    if(arec && arec.archivedAt) abase = { cls:'c-grn', lbl:yr+' complete' };
+    else if(arec && (arec.approvals && Object.keys(arec.approvals).some(function(k){return arec.approvals[k].signedAt;}))) abase = { cls:'c-amb', lbl:yr+' in progress' };
+    else abase = { cls:'c-gry', lbl:yr+' not started' };
+    return withSchedule(abase, String(yr));
   }
 }
 /* Open a person's quarterly or annual review from the dashboard. */
@@ -8713,6 +8728,22 @@ function _pndTile(label, val, valColor, bg){
         try {
           var parsed = JSON.parse(txt);
           if(parsed && typeof parsed === 'object' && parsed.keys && typeof parsed.keys === 'object') remote = parsed;
+          else if(parsed && typeof parsed === 'object'){
+            /* v1-adapter migration: the first deployed build wrote per-key
+               children shaped { <storageKey>: {v, at, by} }. Recognize that
+               shape strictly (every own property is one of our keys and
+               carries a string .v) and convert it; anything else stays
+               unreadable and untouched. */
+            var props = Object.keys(parsed);
+            var isV1 = props.length > 0 && props.every(function(k){
+              return KEYS.indexOf(k) !== -1 && parsed[k] && typeof parsed[k].v === 'string';
+            });
+            if(isV1){
+              var mig = {};
+              props.forEach(function(k){ mig[k] = parsed[k].v; });
+              remote = { __v: myVersion(), keys: mig, __migratedFromV1: true };
+            } else unreadable = true;
+          }
           else unreadable = true;
         } catch(e){ unreadable = true; }
       }
@@ -8761,7 +8792,13 @@ function _pndTile(label, val, valColor, bg){
       lastSyncedSig = remoteSig;
       applySnapshot(remote);
       ready = true;
-      flash('ok', 'Loaded team data', 1500);
+      if(remote.__migratedFromV1){
+        /* Upgrade the cloud node to the v2 shape so every other browser reads it. */
+        pushUp();
+        flash('ok', 'Loaded team data (upgraded)', 1500);
+      } else {
+        flash('ok', 'Loaded team data', 1500);
+      }
     }).catch(function(){
       pulling = false;
       setBadge('off', 'Offline - tap to retry');
