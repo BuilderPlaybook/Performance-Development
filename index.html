@@ -1883,7 +1883,7 @@ window.SMB_PND_COMPLIANCE = {
       for(var k=0;k<12;k++){
         var iso = isoDate(d);
         if(complianceWeekFinal(groupId, iso)) return { week: iso, value: complianceForWeek(groupId, iso) };
-        d = new Date(d.getTime() - 7*86400000);
+        d = _pndPrevWeek(d);
       }
       return null;
     }catch(e){ return null; }
@@ -1918,8 +1918,25 @@ window.SMB_PND_COMPLIANCE = {
    Derived data: every device recomputes it from the synced huddle records,
    so it is consistent without being authoritative anywhere.
    ============================================================ */
+/* Step back one week without falling foul of the clock change. Subtracting
+   7*24 hours in milliseconds lands an hour early across a daylight-saving
+   boundary, which rolls the date into the previous day and turns every Monday
+   before the change into a Sunday. setDate is calendar-aware and does not. */
+function _pndPrevWeek(d){
+  var n = new Date(d.getTime());
+  n.setDate(n.getDate() - 7);
+  n.setHours(0,0,0,0);
+  return n;
+}
 var PND_BRIDGE_KEY = 'smb_pnd_compliance_bridge_v1';
-var PND_BRIDGE_WEEKS_BACK = 26;
+var PND_BRIDGE_WEEKS_BACK = 78;   /* 18 months, so a full backfill year is covered */
+/* Hard floor. Nothing before this week is ever published, whatever the data
+   says. VSP's columns before this point hold numbers that were entered by hand
+   over months, and a stray closed week from the pilot period must not be able
+   to overwrite them. The week of Jul 13 2026 is the first week LIDA ran the
+   scorecard in this module. Moving this forward is safe; moving it back means
+   deciding, deliberately, to let P&D write over VSP history. */
+var PND_BRIDGE_FIRST_WEEK = '2026-07-13';
 function _pndWriteComplianceBridge(){
   try{
     var groups = pndComplianceGroups();
@@ -1930,11 +1947,12 @@ function _pndWriteComplianceBridge(){
       var d = new Date(monday.getTime());
       for(var k=0; k<PND_BRIDGE_WEEKS_BACK; k++){
         var iso = isoDate(d);
+        if(iso < PND_BRIDGE_FIRST_WEEK) break;              /* never write over VSP history */
         if(complianceWeekFinal(gid, iso)){
           var v = complianceForWeek(gid, iso);
           if(v !== null) weeks[iso] = v;
         }
-        d = new Date(d.getTime() - 7*86400000);
+        d = _pndPrevWeek(d);
       }
       out.groups[gid] = { vspMetricId:g.vspMetricId, label:g.label, weeks:weeks };
     });
@@ -5848,7 +5866,8 @@ function _pndComplianceGroupsBody(){
       queued = keys.length
         ? 'Closed and ready for VSP: '+keys.map(function(k){
             return _pndFormatDateShort(k)+' '+wks[k]+'%';
-          }).join(' &middot; ')
+          }).join(' &middot; ')+
+          '<br><span style="color:var(--txm)">Nothing before the week of '+_pndFormatDateShort(PND_BRIDGE_FIRST_WEEK)+' is ever sent. Earlier VSP columns stay as entered.</span>'
         : 'Closed and ready for VSP: nothing yet. No week has closed for everyone in this group.';
     }catch(e){ queued = ''; }
     return '<div class="cg-grp">'+
