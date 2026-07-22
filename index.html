@@ -985,16 +985,18 @@ summary:focus-visible,
 .modal-h{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
 .modal-b{padding:18px;overflow-y:auto}
 .modal-x{background:none;border:none;font-size:var(--fz-xl);color:var(--txm);cursor:pointer;line-height:1}
-.cg-modal{max-width:640px}
-.cg-grp{border:1px solid var(--brd);border-radius:var(--r-card);padding:12px 14px;margin-bottom:12px}
-.cg-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cg-modal{max-width:720px}
+.cg-grp{border:1px solid var(--brd);border-radius:var(--r-card);padding:14px 16px;margin-bottom:16px}
+.cg-hd{display:flex;align-items:baseline;gap:10px}
 .cg-lbl{font-size:var(--fz-lg);font-weight:700;color:var(--txt)}
-.cg-meta{font-size:var(--fz-body);color:var(--txm)}
-.cg-people{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
-.cg-p{display:flex;align-items:center;gap:8px;font-size:var(--fz-body);color:var(--txt);cursor:pointer;padding:3px 0}
-.cg-nm{font-weight:600}
-.cg-role{color:var(--txm)}
-.cg-hint{color:var(--txd);font-size:var(--fz-xs);font-weight:700;text-transform:uppercase}
+.cg-meta{font-size:var(--fz-body);color:var(--txm);margin:2px 0 12px}
+.cg-people{display:flex;flex-direction:column}
+.cg-p{display:flex;align-items:center;gap:10px;font-size:var(--fz-body);color:var(--txt);cursor:pointer;padding:8px 2px;border-top:1px solid var(--brd);min-width:0}
+.cg-p:first-child{border-top:none}
+.cg-p:hover{background:var(--sur2)}
+.cg-nm{font-weight:600;white-space:nowrap}
+.cg-role{color:var(--txm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cg-hint{margin-left:auto;padding-left:12px;color:var(--txd);font-size:var(--fz-xs);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 .hist-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd)}
 .hist-row:last-child{border-bottom:none}
 .hist-wk{font-weight:600;color:var(--txt);min-width:180px}
@@ -5824,7 +5826,7 @@ function _pndComplianceGroupsBody(){
       var started = false;
       try{ started = !!_pndFirstDataWeek(p.id) || !!trackingStartFor(p.id); }catch(e){}
       var hasStd = !!ROLE_STANDARDS[p.roleLabel];
-      var hint = !hasStd ? '<span class="cg-hint">no scorecard yet</span>'
+      var hint = !hasStd ? '<span class="cg-hint">no scorecard</span>'
                : (!started ? '<span class="cg-hint">not started</span>' : '');
       return '<label class="cg-p">'+
                '<input type="checkbox" '+(on?'checked ':'')+
@@ -5837,9 +5839,8 @@ function _pndComplianceGroupsBody(){
              '<div class="cg-hd">'+
                '<span class="cg-lbl">'+esc(g.label)+'</span>'+
                '<span class="chip '+chipCls+'">'+esc(pctTxt)+'</span>'+
-               '<span class="spacer"></span>'+
-               '<span class="cg-meta">VSP measurable '+esc(String(g.vspMetricId))+' &middot; '+esc(g.ownerInitials||'')+' &middot; this week '+esc(stateTxt)+'</span>'+
              '</div>'+
+             '<div class="cg-meta">VSP measurable '+esc(String(g.vspMetricId))+' &middot; '+esc(g.ownerInitials||'')+' &middot; this week '+esc(stateTxt)+'</div>'+
              '<div class="cg-people">'+rows+'</div>'+
            '</div>';
   }).join('');
