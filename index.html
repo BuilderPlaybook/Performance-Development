@@ -985,6 +985,16 @@ summary:focus-visible,
 .modal-h{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
 .modal-b{padding:18px;overflow-y:auto}
 .modal-x{background:none;border:none;font-size:var(--fz-xl);color:var(--txm);cursor:pointer;line-height:1}
+.cg-modal{max-width:640px}
+.cg-grp{border:1px solid var(--brd);border-radius:var(--r-card);padding:12px 14px;margin-bottom:12px}
+.cg-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cg-lbl{font-size:var(--fz-lg);font-weight:700;color:var(--txt)}
+.cg-meta{font-size:var(--fz-body);color:var(--txm)}
+.cg-people{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+.cg-p{display:flex;align-items:center;gap:8px;font-size:var(--fz-body);color:var(--txt);cursor:pointer;padding:3px 0}
+.cg-nm{font-weight:600}
+.cg-role{color:var(--txm)}
+.cg-hint{color:var(--txd);font-size:var(--fz-xs);font-weight:700;text-transform:uppercase}
 .hist-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd)}
 .hist-row:last-child{border-bottom:none}
 .hist-wk{font-weight:600;color:var(--txt);min-width:180px}
@@ -1535,16 +1545,25 @@ var state = {
   reportId:null,
   weekIso:null,
   historyOpen:false,
+  cgOpen:false,                                              /* VSP compliance groups modal */
   qMoreOpen:false,                                           /* meta-strip More overflow menu */
   openGroups:{}
 };
 
 /* ============================================================
-   WEEKLY SCORECARD LOCK v1 (D-110)
+   WEEKLY SCORECARD LOCK v1 (D-110) + LOCK TIERS v1
    A scorecard week is completed after the week ends. The week starting
-   Monday covers Mon-Sun, and stays open through the END OF THE FOLLOWING
-   MONDAY. At midnight into Tuesday it locks: every Yes/No cell and the
-   Away toggle become read-only for the person and their supervisor.
+   Monday covers Mon-Sun and stays open into the following week; the day it
+   closes depends on how much of the company the person runs, because the
+   people above wait on the people below before their own numbers are real.
+     Company    locks end of the following WEDNESDAY  (week start + 9 days)
+     Division   locks end of the following TUESDAY    (week start + 8 days)
+     Individual locks end of the following MONDAY     (week start + 7 days)
+   Tier is derived from the org chart, not hardcoded: the highest person
+   carrying a weekly scorecard is Company, their direct reports are Division,
+   everyone deeper is Individual. An admin can override per person.
+   Once locked, every Yes/No cell and the Away toggle become read-only for
+   the person and their supervisor.
    Scores freeze exactly as they stand - unmarked empty rows keep counting
    0% per D-94, Away weeks stay excluded. Away locks with everything else,
    so a missed week cannot be retroactively excused.
@@ -1553,37 +1572,381 @@ var state = {
    Note: the deadline reads the browser clock. Authoritative server-side
    time arrives with the backend cutover.
    ============================================================ */
-function _pndWeekLockAt(weekIso){
-  /* End of the Monday AFTER the week ends. */
+var PND_LOCK_TIERS = [
+  { id:0, label:'Company',    days:9, dayName:'Wednesday' },
+  { id:1, label:'Division',   days:8, dayName:'Tuesday'   },
+  { id:2, label:'Individual', days:7, dayName:'Monday'    }
+];
+function _pndOrgDepth(personId){
+  var cur = personById(personId), d = 0, seen = {};
+  while(cur && cur.reportsTo && !seen[cur.id]){
+    seen[cur.id] = 1;
+    var nx = personById(cur.reportsTo);
+    if(!nx) break;
+    cur = nx; d++;
+    if(d > 20) break;                                       /* cycle guard */
+  }
+  return d;
+}
+/* Depth of the highest person who actually carries a weekly scorecard. Under
+   LIDA that is the VP of Construction, because the President has no weekly
+   standard. Anchoring here rather than at the org root means the tiers land
+   correctly for a tenant whose owner does run a weekly scorecard. */
+function _pndTopScoredDepth(){
+  var best = null;
+  try{
+    people().forEach(function(p){
+      if(!p || p.status !== 'active') return;
+      if(!ROLE_STANDARDS[p.roleLabel]) return;
+      var d = _pndOrgDepth(p.id);
+      if(best === null || d < best) best = d;
+    });
+  }catch(e){}
+  return best === null ? 0 : best;
+}
+function _pndLoadLockTiers(){
+  try{ return JSON.parse(localStorage.getItem('smb_pnd_lock_tier_v1')||'{}') || {}; }catch(e){ return {}; }
+}
+function _pndSaveLockTiers(o){
+  try{ localStorage.setItem('smb_pnd_lock_tier_v1', JSON.stringify(o||{})); }catch(e){}
+}
+/* Admin override. Pass null to clear and revert to the org-derived tier. */
+function pndSetLockTier(personId, tier){
+  var o = _pndLoadLockTiers();
+  if(tier === null || tier === '' || tier === undefined) delete o[personId];
+  else o[personId] = Math.max(0, Math.min(2, Number(tier)));
+  _pndSaveLockTiers(o);
+}
+function pndLockTier(personId){
+  if(!personId) return 2;
+  var ov = _pndLoadLockTiers();
+  if(ov[personId] != null) return Math.max(0, Math.min(2, Number(ov[personId])));
+  return Math.max(0, Math.min(2, _pndOrgDepth(personId) - _pndTopScoredDepth()));
+}
+function pndLockTierIsOverridden(personId){
+  var ov = _pndLoadLockTiers();
+  return !!(personId && ov[personId] != null);
+}
+function _pndWeekLockAt(personId, weekIso){
   var d = new Date(weekIso+'T00:00:00');
-  d.setDate(d.getDate() + 7);
+  d.setDate(d.getDate() + PND_LOCK_TIERS[pndLockTier(personId)].days);
   d.setHours(23,59,59,999);
   return d;
 }
-function isWeekLocked(weekIso){
+function isWeekLocked(personId, weekIso){
   if(!weekIso) return false;
-  return new Date().getTime() > _pndWeekLockAt(weekIso).getTime();
+  return new Date().getTime() > _pndWeekLockAt(personId, weekIso).getTime();
 }
 /* Admins keep the ability to correct a locked week. */
-function canEditWeek(weekIso){
-  if(!isWeekLocked(weekIso)) return true;
+function canEditWeek(personId, weekIso){
+  if(!isWeekLocked(personId, weekIso)) return true;
   return pdAccessMode() === 'admin';
 }
-function _pndLockDeadlineLabel(weekIso){
-  try{ return _pndFormatDateShort(isoDate(_pndWeekLockAt(weekIso))); }
+function _pndLockDeadlineLabel(personId, weekIso){
+  try{ return _pndFormatDateShort(isoDate(_pndWeekLockAt(personId, weekIso))); }
   catch(e){ return ''; }
 }
 /* Blocked write: tell the user why instead of failing silently. */
-function _pndLockRefuse(weekIso){
-  toast('This week locked on '+_pndLockDeadlineLabel(weekIso)+'. Contact an admin to make changes.');
+function _pndLockRefuse(personId, weekIso){
+  toast('This week locked on '+_pndLockDeadlineLabel(personId, weekIso)+'. Contact an admin to make changes.');
 }
 /* Stamp an admin edit made after the lock so the record shows who changed it. */
-function _pndStampLockEdit(rec, weekIso){
-  if(!rec || !isWeekLocked(weekIso)) return rec;
+function _pndStampLockEdit(rec, personId, weekIso){
+  if(!rec || !isWeekLocked(personId, weekIso)) return rec;
   var cu = currentUser();
   rec.lockEdits = rec.lockEdits || [];
   rec.lockEdits.push({ by: cu?cu.id:'', byName: cu?fullName(cu):'Admin', at: new Date().toISOString() });
   return rec;
+}
+
+/* ============================================================
+   SCORECARD TRACKING START v1
+   Empty weeks count as 0% (D-94) so a role cannot inflate its score by
+   skipping weeks. That rule must not reach backwards into weeks before a
+   person was ever using the system: on a fresh rollout it drags everyone
+   to 0% until a full window of history accumulates.
+   A person's tracking therefore starts at their first real entry, computed
+   automatically so no setup is required. An admin can override the date per
+   person (someone who joins later, or a deliberate fresh start).
+   Weeks before the start are neutral: not scored, not counted, no Away
+   control - they are simply outside the tracked period.
+   ============================================================ */
+function _pndLoadTrackingStart(){
+  try{ return JSON.parse(localStorage.getItem('smb_pnd_tracking_start_v1')||'{}') || {}; }
+  catch(e){ return {}; }
+}
+function _pndSaveTrackingStart(o){
+  try{ localStorage.setItem('smb_pnd_tracking_start_v1', JSON.stringify(o||{})); }catch(e){}
+}
+/* Earliest week this person has any huddle record for. Cached per render
+   pass because the weekly grid asks for it on every cell. */
+var _pndFirstWeekCache = null;
+function _pndFirstDataWeek(personId){
+  if(_pndFirstWeekCache && _pndFirstWeekCache.hasOwnProperty(personId)) return _pndFirstWeekCache[personId];
+  if(!_pndFirstWeekCache) _pndFirstWeekCache = {};
+  var all = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
+  var earliest = null, pfx = personId+'__';
+  Object.keys(all).forEach(function(k){
+    if(k.indexOf(pfx)!==0) return;
+    var iso = k.slice(pfx.length);
+    if(!earliest || iso < earliest) earliest = iso;
+  });
+  _pndFirstWeekCache[personId] = earliest;
+  return earliest;
+}
+function _pndInvalidateTrackingCache(){ _pndFirstWeekCache = null; }
+/* Explicit override wins, then the tenant default, then the computed
+   first-entry week. Null means every week is tracked. */
+function trackingStartFor(personId){
+  var cfg = _pndLoadTrackingStart();
+  if(cfg.byPerson && cfg.byPerson[personId]) return cfg.byPerson[personId];
+  if(cfg.tenantDefault) return cfg.tenantDefault;
+  return _pndFirstDataWeek(personId);
+}
+function setTrackingStartFor(personId, iso){
+  var cfg = _pndLoadTrackingStart();
+  cfg.byPerson = cfg.byPerson || {};
+  if(iso) cfg.byPerson[personId] = iso; else delete cfg.byPerson[personId];
+  _pndSaveTrackingStart(cfg);
+  _pndInvalidateTrackingCache();
+}
+/* Is this week inside the person's tracked period?
+   An explicit start date always wins. Otherwise tracking begins at their
+   first real entry - and someone who has never entered anything is not
+   tracked at all, so they are absent from averages rather than scored 0%.
+   Set an explicit start date to hold someone to a date regardless. */
+function isWeekTracked(personId, weekIso){
+  if(!weekIso) return false;
+  var cfg = _pndLoadTrackingStart();
+  var explicit = (cfg.byPerson && cfg.byPerson[personId]) || cfg.tenantDefault || null;
+  if(explicit) return weekIso >= explicit;
+  var first = _pndFirstDataWeek(personId);
+  if(!first) return false;                 /* has never used it - not yet tracked */
+  return weekIso >= first;
+}
+
+function pndSetTrackingStart(personId, iso){
+  setTrackingStartFor(personId, iso||null);
+  var p = personById(personId);
+  toast(iso ? ('Tracking starts '+_pndFormatDateShort(iso)+' for '+(p?p.first:'this person'))
+            : 'Tracking start cleared - defaults to first entry');
+  renderPage();
+}
+
+/* Meta-strip control. Empty value reverts to the org-derived tier. */
+function pndSetLockTierUI(personId, val){
+  pndSetLockTier(personId, (val==='' ? null : Number(val)));
+  var p = personById(personId);
+  toast((p?p.first:'This person')+"'s week now closes "+PND_LOCK_TIERS[pndLockTier(personId)].dayName+' night'+(val===''?' (auto)':''));
+  renderPage();
+}
+
+/* ============================================================
+   PERFORMANCE POINTS COMPLIANCE v1 (feeds VSP)
+   VSP carries four measurables (goal >=90%, unit %) that are group averages
+   of P&D weekly scores:
+     id 45  Companywide Performance Points Compliance   -> TP (Terry)
+     id 32  All PM Performance Points Compliance        -> WL (Will)
+     id 38  All ID Performance Points Compliance        -> MN (Mika)
+     id 52  All Financial Performance Points Compliance -> LS (Lisa)
+   P&D owns the performance record, so P&D computes these and publishes them.
+
+   TIMING (deliberate): the number is recomputed inside emitPndSignals(),
+   which fires on every scorecard write. It is NOT tied to the "Mark
+   discussed" tick, or to sign-off, or to any human step that can be
+   forgotten - the moment a percentage lands in a weekly score, the group
+   number moves with it.
+
+   Membership uses the same exclusions as the scorecard itself: a person
+   outside their tracked period (has not started yet) or marked Away that
+   week drops out of the average rather than dragging it down. So people
+   can be assigned to a group before they begin using the system.
+   ============================================================ */
+var PND_COMPLIANCE_GROUPS_DEFAULT = {
+  companywide: { label:'Companywide',   feedKey:'pnd.compliance.companywide', vspMetricId:45, ownerInitials:'TP',
+                 members:['p3','p7','p8','p9','p10','p11','p12','p13','p2'] },
+  pm:          { label:'All PM',        feedKey:'pnd.compliance.pm',          vspMetricId:32, ownerInitials:'WL',
+                 members:['p7','p8'] },
+  id:          { label:'All ID',        feedKey:'pnd.compliance.id',          vspMetricId:38, ownerInitials:'MN',
+                 members:['p13'] },
+  financial:   { label:'All Financial', feedKey:'pnd.compliance.financial',   vspMetricId:52, ownerInitials:'LS',
+                 members:['p2','p12'] }
+};
+function pndComplianceGroups(){
+  var stored = null;
+  try{ stored = JSON.parse(localStorage.getItem('smb_pnd_compliance_groups_v1')||'null'); }catch(e){}
+  if(!stored || typeof stored!=='object') return PND_COMPLIANCE_GROUPS_DEFAULT;
+  /* Stored config only overrides membership; labels and VSP wiring stay in code. */
+  var out = {};
+  Object.keys(PND_COMPLIANCE_GROUPS_DEFAULT).forEach(function(gid){
+    var base = PND_COMPLIANCE_GROUPS_DEFAULT[gid];
+    out[gid] = { label:base.label, feedKey:base.feedKey, vspMetricId:base.vspMetricId, ownerInitials:base.ownerInitials,
+                 members: Array.isArray(stored[gid]) ? stored[gid] : base.members };
+  });
+  return out;
+}
+function pndSetComplianceMembers(groupId, memberIds){
+  var cur = {};
+  try{ cur = JSON.parse(localStorage.getItem('smb_pnd_compliance_groups_v1')||'{}') || {}; }catch(e){}
+  cur[groupId] = memberIds.slice();
+  try{ localStorage.setItem('smb_pnd_compliance_groups_v1', JSON.stringify(cur)); }catch(e){}
+  try{ emitPndSignals(); }catch(e){}
+}
+/* One person's scored percentage for a week, or null when they are outside
+   the average (not started, away, or no standard defined for the role). */
+function _pndPersonWeekPct(personId, weekIso){
+  var person = personById(personId);
+  if(!person) return null;
+  if(!isWeekTracked(personId, weekIso)) return null;      /* has not started yet */
+  var std = standardFor(person, weekIso);
+  if(std && std.rotates){
+    try{ std = ROLE_STANDARDS[person.roleLabel].weeks[activePhaseFor(person, weekIso)-1].items; }catch(e){ std = null; }
+  }
+  if(!std || !std.length) return null;                    /* no scorecard for this role */
+  var all = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
+  var rec = all[personId+'__'+weekIso];
+  if(rec && rec.away) return null;                        /* away excluded */
+  if(!rec) return 0;                                      /* tracked but empty = 0% (D-94) */
+  var yes=0, hard=false;
+  std.forEach(function(row){
+    var v = (rec.answers||{})[row.id];
+    if(v==='yes') yes++;
+    else if(row.hard) hard = true;
+  });
+  return hard ? 0 : Math.round((yes/std.length)*100);
+}
+/* Group compliance for a week: the average of member percentages.
+   Returns null when nobody in the group is in scope that week. */
+function complianceForWeek(groupId, weekIso){
+  var g = pndComplianceGroups()[groupId];
+  if(!g || !weekIso) return null;
+  var sum=0, n=0;
+  g.members.forEach(function(pid){
+    var pct = _pndPersonWeekPct(pid, weekIso);
+    if(pct===null) return;
+    sum += pct; n++;
+  });
+  if(!n) return null;
+  return Math.round((sum/n)*100)/100;                     /* 2dp, matching VSP readings */
+}
+/* A group's week is FINAL only once every member in scope for that week has
+   passed their own lock deadline. Members out of scope (not yet tracked, away,
+   no standard) do not hold the week open, since they are not in the average.
+   Tiered locks mean the division leads close a day after their people and the
+   company lead a day after that, so a group is final on its slowest member. */
+function complianceWeekFinal(groupId, weekIso){
+  var g = pndComplianceGroups()[groupId];
+  if(!g || !weekIso) return false;
+  var any = false, allLocked = true;
+  g.members.forEach(function(pid){
+    if(_pndPersonWeekPct(pid, weekIso) === null) return;      /* out of scope */
+    any = true;
+    if(!isWeekLocked(pid, weekIso)) allLocked = false;
+  });
+  return any && allLocked;
+}
+/* Published contract, consumed by VSP.
+
+   forWeek() answers per week and returns a number ONLY once that week is
+   final. This is deliberate: an open week's percentage still moves as people
+   enter their answers, and a half-entered number landing in the Leadership
+   Team scorecard is worse than no number. VSP fills a week column from this
+   and then that column never changes again.
+
+   The flat window.SMB_SCORECARD_FEED keys are retired. VSP's scApplyFeed()
+   writes whatever it is given into the CURRENT week column, but a week is not
+   final until partway through the FOLLOWING week, so that path would file
+   every reading one column late. Pull by week instead. */
+window.SMB_PND_COMPLIANCE = {
+  /* Final value for a closed week, or null while the week is still open. */
+  forWeek: function(groupId, weekIso){
+    try{ return complianceWeekFinal(groupId, weekIso) ? complianceForWeek(groupId, weekIso) : null; }
+    catch(e){ return null; }
+  },
+  /* Has this week closed for everyone in the group. */
+  isFinal: function(groupId, weekIso){
+    try{ return complianceWeekFinal(groupId, weekIso); }catch(e){ return false; }
+  },
+  /* Running value for a week whether or not it has closed. For P&D's own
+     display and for a supervisor watching the week fill in. Not for VSP. */
+  liveForWeek: function(groupId, weekIso){
+    try{ return complianceForWeek(groupId, weekIso); }catch(e){ return null; }
+  },
+  /* Most recent CLOSED week, walking back up to 12 weeks. Returns
+     {week, value} or null. */
+  latestFinal: function(groupId){
+    try{
+      var d = mondayOf(new Date());
+      for(var k=0;k<12;k++){
+        var iso = isoDate(d);
+        if(complianceWeekFinal(groupId, iso)) return { week: iso, value: complianceForWeek(groupId, iso) };
+        d = new Date(d.getTime() - 7*86400000);
+      }
+      return null;
+    }catch(e){ return null; }
+  },
+  groups: function(){
+    try{
+      var g = pndComplianceGroups(), out = {};
+      Object.keys(g).forEach(function(k){
+        out[k] = { label:g[k].label, feedKey:g[k].feedKey, vspMetricId:g[k].vspMetricId, members:g[k].members.slice() };
+      });
+      return out;
+    }catch(e){ return {}; }
+  }
+};
+/* ============================================================
+   COMPLIANCE BRIDGE v1  (P&D -> VSP, staging transport)
+   VSP and P&D are two separate pages, so a JS global set here is invisible
+   there. Both are served from the same origin, so localStorage is the
+   transport until the master shell mounts both modules in one document.
+
+   P&D is the sole writer. Only CLOSED weeks are written: an open week's
+   percentage still moves as people enter answers, and a half-entered number
+   landing in the Leadership Team scorecard is worse than no number. Once a
+   week is written it does not change again unless an admin edits the locked
+   week, in which case the corrected value is republished on the next write.
+
+   Shape at smb_pnd_compliance_bridge_v1:
+     { v:1, tenantId:'lida-001', updatedAt:<iso>,
+       groups: { <groupId>: { vspMetricId:<n>, label:<str>,
+                              weeks: { '<weekIso>': <number> } } } }
+
+   Derived data: every device recomputes it from the synced huddle records,
+   so it is consistent without being authoritative anywhere.
+   ============================================================ */
+var PND_BRIDGE_KEY = 'smb_pnd_compliance_bridge_v1';
+var PND_BRIDGE_WEEKS_BACK = 26;
+function _pndWriteComplianceBridge(){
+  try{
+    var groups = pndComplianceGroups();
+    var out = { v:1, tenantId:'lida-001', updatedAt:new Date().toISOString(), groups:{} };
+    var monday = mondayOf(new Date());
+    Object.keys(groups).forEach(function(gid){
+      var g = groups[gid], weeks = {};
+      var d = new Date(monday.getTime());
+      for(var k=0; k<PND_BRIDGE_WEEKS_BACK; k++){
+        var iso = isoDate(d);
+        if(complianceWeekFinal(gid, iso)){
+          var v = complianceForWeek(gid, iso);
+          if(v !== null) weeks[iso] = v;
+        }
+        d = new Date(d.getTime() - 7*86400000);
+      }
+      out.groups[gid] = { vspMetricId:g.vspMetricId, label:g.label, weeks:weeks };
+    });
+    localStorage.setItem(PND_BRIDGE_KEY, JSON.stringify(out));
+  }catch(e){}
+}
+/* Retired: the flat feed keys wrote a closed week's value into VSP's current
+   week column. Any stale keys left in a loaded page are cleared so nothing
+   downstream can pick up the wrong-column version. */
+function _pndPublishComplianceFeed(){
+  try{
+    if(!window.SMB_SCORECARD_FEED) return;
+    var g = pndComplianceGroups();
+    Object.keys(g).forEach(function(gid){ delete window.SMB_SCORECARD_FEED[g[gid].feedKey]; });
+  }catch(e){}
 }
 
 /* Per (report, week) huddle record */
@@ -1594,9 +1957,10 @@ function getRec(){
   return all[recKey()] || blankRec();
 }
 function putRec(rec){
+  _pndInvalidateTrackingCache();
   /* Weekly Scorecard Lock v1: refuse writes to a locked week unless admin. */
-  if(!canEditWeek(state.weekIso)){ _pndLockRefuse(state.weekIso); return false; }
-  _pndStampLockEdit(rec, state.weekIso);
+  if(!canEditWeek(state.reportId, state.weekIso)){ _pndLockRefuse(state.reportId, state.weekIso); return false; }
+  _pndStampLockEdit(rec, state.reportId, state.weekIso);
   var all = pdLoad('huddles', {});
   rec.savedAt = new Date().toISOString();
   all[recKey()] = rec;
@@ -1828,7 +2192,8 @@ function _pndLastNScores(personId, weekIso, n){
       var phase = activePhaseFor(person, iso);
       std = ROLE_STANDARDS[person.roleLabel].weeks[phase-1].items;
     }
-    if(!rec || !std){ out.push({iso:iso, pct:null, away:false, hardFail:false}); }
+    if(!isWeekTracked(personId, iso)){ out.push({iso:iso, pct:null, away:false, hardFail:false, untracked:true}); }
+    else if(!rec || !std){ out.push({iso:iso, pct:null, away:false, hardFail:false}); }
     else if(rec.away){ out.push({iso:iso, pct:null, away:true, hardFail:false}); }
     else {
       var yes=0, total=std.length, hard=false;
@@ -1874,7 +2239,7 @@ function _pndDashboardSupervisor(cu, visiblePeople, thisMonday, isAdmin){
       /* Scorecard completion is weekly for EVERY role - meeting cadence only
          governs the huddle meeting, not the scorecard. So an off-week that
          locked incomplete still counts as missed. */
-      var _lwMissed = isWeekLocked(_lwIso) && _lwSt !== 'complete' && _lwSt !== 'away' && _lwSt !== 'no-std';
+      var _lwMissed = isWeekTracked(p.id, _lwIso) && isWeekLocked(p.id, _lwIso) && _lwSt !== 'complete' && _lwSt !== 'away' && _lwSt !== 'no-std';
       var pillCls, pillLbl;
       if(!isDue){
         pillCls = 'c-gry'; pillLbl = 'Not due this week';
@@ -2278,6 +2643,27 @@ function renderHuddle(){
         _pdCadSelect+
         '<div class="field"><label>Meeting</label><label class="pd-discussed'+(rec.discussed?' is-done':'')+'"><input type="checkbox" '+(rec.discussed?'checked':'')+' onchange="toggleDiscussed(this.checked)"><span>'+(rec.discussed?'&#10003; Discussed with supervisor':'Mark discussed')+'</span></label></div>'+
        '</div>'+
+       (pdAccessMode()==='admin'
+         ? '<div class="hd-f"><label class="hd-l" for="pnd-track-start">Tracking starts</label>'+
+             '<input id="pnd-track-start" type="date" class="inp" value="'+esc(trackingStartFor(person.id)||'')+'"'+
+             ' title="Weeks before this date are not scored for this person. Defaults to their first entry."'+
+             ' onchange="pndSetTrackingStart(\''+person.id+'\', this.value)">'+
+           '</div>'+
+           '<div class="hd-f"><label class="hd-l" for="pnd-lock-tier">Locks</label>'+
+             '<select id="pnd-lock-tier" class="sel"'+
+             ' title="Which day this person\'s week closes. Derived from the org chart; override only if this person does not fit the pattern."'+
+             ' onchange="pndSetLockTierUI(\''+person.id+'\', this.value)">'+
+               '<option value=""'+(pndLockTierIsOverridden(person.id)?'':' selected')+'>Auto &middot; '+esc(PND_LOCK_TIERS[pndLockTier(person.id)].dayName)+'</option>'+
+               PND_LOCK_TIERS.map(function(t){
+                 return '<option value="'+t.id+'"'+((pndLockTierIsOverridden(person.id)&&pndLockTier(person.id)===t.id)?' selected':'')+'>'+esc(t.dayName)+' &middot; '+esc(t.label)+'</option>';
+               }).join('')+
+             '</select>'+
+           '</div>'+
+           '<div class="hd-f"><label class="hd-l">VSP groups</label>'+
+             '<button type="button" class="btn btn-sm" onclick="openComplianceGroups()"'+
+             ' title="Which people roll up into each Performance Points Compliance measurable in VSP">Manage</button>'+
+           '</div>'
+         : '')+
        _pdMeetingNote+
        (_pdCad!=='weekly' ? '<div class="pd-cad-note '+(_pdIsHuddleWk?'is-huddle':'off-week')+'">'+
           (_pdIsHuddleWk
@@ -2289,7 +2675,7 @@ function renderHuddle(){
   /* Weekly Scorecard Lock v1 banner. Shown whenever the displayed week is
      past its deadline, with a different message for admins (who can still
      edit) than for everyone else (read-only). */
-  if(isWeekLocked(state.weekIso)){
+  if(isWeekLocked(state.reportId, state.weekIso)){
     var _lkAdmin = pdAccessMode()==='admin';
     var _lkRec = rec || {};
     var _lkEdits = (_lkRec.lockEdits||[]);
@@ -2303,8 +2689,8 @@ function renderHuddle(){
     h += '<div class="pd-lock-note '+(_lkAdmin?'is-admin':'is-locked')+'">'+
            '<span class="pd-lock-ico">&#128274;</span>'+
            (_lkAdmin
-             ? '<span><b>Locked</b> &middot; this week closed '+esc(_pndLockDeadlineLabel(state.weekIso))+'. You can still make changes as an admin; any edit is recorded below.</span>'
-             : '<span><b>Locked</b> &middot; this week closed '+esc(_pndLockDeadlineLabel(state.weekIso))+'. Contact an admin to make changes.</span>')+
+             ? '<span><b>Locked</b> &middot; this week closed '+esc(_pndLockDeadlineLabel(state.reportId, state.weekIso))+' ('+esc(PND_LOCK_TIERS[pndLockTier(state.reportId)].dayName)+' night). You can still make changes as an admin; any edit is recorded below.</span>'
+             : '<span><b>Locked</b> &middot; this week closed '+esc(_pndLockDeadlineLabel(state.reportId, state.weekIso))+' ('+esc(PND_LOCK_TIERS[pndLockTier(state.reportId)].dayName)+' night). Contact an admin to make changes.</span>')+
          '</div>'+_lkTrail;
   }
 
@@ -2355,6 +2741,7 @@ function renderHuddle(){
   h += '</div></div>';
 
   if(state.historyOpen) h += renderHistoryModal(person);
+  if(state.cgOpen && pdAccessMode()==='admin') h += renderComplianceGroupsModal();
   return h;
 }
 
@@ -3030,6 +3417,7 @@ function renderRotatingHuddle(person){
   weeks.forEach(function(iso){
     var rec = all[person.id+'__'+iso];
     if(rec && rec.away){ weeksAway++; return; }
+    if(!isWeekTracked(personId, iso)) return;               /* before tracking started - not counted */
     if(!rec){ weeklyPcts.push(0); return; }                 /* empty week counts as 0% */
     var phase = activePhaseFor(person, iso);
     var std = roleDef.weeks[phase-1].items;
@@ -4999,7 +5387,7 @@ function clearPhaseOverride(){
   renderPage();
 }
 function toggleAway(on){ var r=getRec(); r.away=!!on; putRec(r); renderPage(); }
-function answerRow(rowId, val){ if(!canEditWeek(state.weekIso)){ _pndLockRefuse(state.weekIso); return; } var r=getRec(); r.answers[rowId] = (r.answers[rowId]===val)?null:val; putRec(r); renderPage(); }
+function answerRow(rowId, val){ if(!canEditWeek(state.reportId, state.weekIso)){ _pndLockRefuse(state.reportId, state.weekIso); return; } var r=getRec(); r.answers[rowId] = (r.answers[rowId]===val)?null:val; putRec(r); renderPage(); }
 
 /* Quarterly handlers */
 function qSelectReport(id){ state.reportId = id; renderPage(); }
@@ -5396,6 +5784,77 @@ function pndResetPersonData(){
   }catch(e){}
 })();
 
+/* ---- VSP compliance groups modal (Manage-X Configuration Modal Pattern v1) ----
+   Membership of the four Performance Points Compliance measurables that P&D
+   publishes to VSP. Each group shows the measurable it feeds and its live
+   percentage, so the effect of adding or removing someone is visible as it
+   happens rather than discovered in VSP next week. People who have not started
+   using the module are flagged, since assigning them is safe: they sit outside
+   the average until their first entry. */
+function openComplianceGroups(){ state.cgOpen = true; renderPage(); }
+function closeComplianceGroups(){ state.cgOpen = false; renderPage(); }
+function pndToggleComplianceMember(groupId, personId){
+  var g = pndComplianceGroups()[groupId];
+  if(!g) return;
+  var ms = g.members.slice();
+  var i = ms.indexOf(personId);
+  if(i >= 0) ms.splice(i, 1); else ms.push(personId);
+  pndSetComplianceMembers(groupId, ms);                     /* saves + re-emits signals */
+  _pndRepaintComplianceGroups();
+}
+/* Repaint the body only, so the list does not jump while ticking boxes. */
+function _pndRepaintComplianceGroups(){
+  var host = document.getElementById('cg-body');
+  if(host) host.innerHTML = _pndComplianceGroupsBody();
+}
+function _pndComplianceGroupsBody(){
+  var groups = pndComplianceGroups();
+  var wk = isoDate(mondayOf(new Date()));
+  var roster = people().filter(function(p){ return p.status === 'active'; });
+  return Object.keys(groups).map(function(gid){
+    var g = groups[gid];
+    var live = null, isFinal = false;
+    try{ live = window.SMB_PND_COMPLIANCE.liveForWeek(gid, wk); }catch(e){}
+    try{ isFinal = window.SMB_PND_COMPLIANCE.isFinal(gid, wk); }catch(e){}
+    var pctTxt = (live === null) ? 'no one in scope' : (live + '%');
+    var chipCls = (live === null) ? 'c-gry' : (live >= 90 ? 'c-grn' : 'c-red');
+    var stateTxt = isFinal ? 'closed' : 'open, still moving';
+    var rows = roster.map(function(p){
+      var on = g.members.indexOf(p.id) >= 0;
+      var started = false;
+      try{ started = !!_pndFirstDataWeek(p.id) || !!trackingStartFor(p.id); }catch(e){}
+      var hasStd = !!ROLE_STANDARDS[p.roleLabel];
+      var hint = !hasStd ? '<span class="cg-hint">no scorecard yet</span>'
+               : (!started ? '<span class="cg-hint">not started</span>' : '');
+      return '<label class="cg-p">'+
+               '<input type="checkbox" '+(on?'checked ':'')+
+                 'onchange="pndToggleComplianceMember(\''+gid+'\',\''+p.id+'\')">'+
+               '<span class="cg-nm">'+esc(fullName(p))+'</span>'+
+               '<span class="cg-role">'+esc(p.roleLabel)+'</span>'+hint+
+             '</label>';
+    }).join('');
+    return '<div class="cg-grp">'+
+             '<div class="cg-hd">'+
+               '<span class="cg-lbl">'+esc(g.label)+'</span>'+
+               '<span class="chip '+chipCls+'">'+esc(pctTxt)+'</span>'+
+               '<span class="spacer"></span>'+
+               '<span class="cg-meta">VSP measurable '+esc(String(g.vspMetricId))+' &middot; '+esc(g.ownerInitials||'')+' &middot; this week '+esc(stateTxt)+'</span>'+
+             '</div>'+
+             '<div class="cg-people">'+rows+'</div>'+
+           '</div>';
+  }).join('');
+}
+function renderComplianceGroupsModal(){
+  /* Modal Keydown StopPropagation Rule v1 (Standards v2.32 / D-88):
+     onkeydown + onclick stopPropagation on .modal container, type="button" on every button. */
+  return '<div class="modal-overlay" onclick="closeComplianceGroups()"><div class="modal cg-modal" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="VSP compliance groups">'+
+    '<div class="modal-h"><span class="smb-modal-title">VSP compliance groups</span><button type="button" class="modal-x" onclick="closeComplianceGroups()" aria-label="Close">&times;</button></div>'+
+    '<div class="modal-b">'+
+      '<div class="smb-modal-sub" style="margin-bottom:14px">Each group is the average of its members\' weekly scores and fills one Performance Points Compliance measurable in VSP. A week is sent to VSP only once it has closed for everyone in the group.</div>'+
+      '<div id="cg-body">'+_pndComplianceGroupsBody()+'</div>'+
+    '</div></div></div>';
+}
+
 /* ---- History modal ---- */
 function openHistory(){ state.historyOpen=true; renderPage(); }
 function closeHistory(){ state.historyOpen=false; renderPage(); }
@@ -5429,6 +5888,10 @@ function toast(msg){
 /* ---- Coach signal (DoD 11): window.SMB_SIGNALS.pnd ---- */
 function emitPndSignals(){
   window.SMB_SIGNALS = window.SMB_SIGNALS || {};
+  /* Compliance feed rides every write, not a manual step. */
+  _pndInvalidateTrackingCache();
+  _pndPublishComplianceFeed();
+  _pndWriteComplianceBridge();               /* closed weeks only, read by VSP */
   var reps = myReports();
   var attention=[], exceptions=[], hardFails=0, redWeeks=0, done=0;
   var thisWeek = isoDate(mondayOf(new Date()));
@@ -6261,6 +6724,8 @@ function renderScorecard(){
         var _pndAggSum=0, _pndAggCount=0;
         activeIdxs.forEach(function(_wi){
           var _iso = _pndWeekIsos[_wi];
+          /* Outside the tracked period: not scored, not counted. */
+          if(_iso && !isWeekTracked(_pndScReportId, _iso)) return;
           var _rec = _iso ? _pndHuddles[_pndScReportId+'__'+_iso] : null;
           if(_rec && _rec.away) return;                     // Away weeks excluded entirely
           if(!_rec){ _pndAggSum += 0; _pndAggCount++; return; }   // empty week counts as 0%
@@ -6294,6 +6759,15 @@ function renderScorecard(){
           var _iso = _pndWeekIsos[_wi];  // weekRanges has no sentinel; index maps 1:1
           var _rec = _iso ? _pndHuddles[_pndScReportId+'__'+_iso] : null;
           var _away = _rec && _rec.away;
+          /* Before this person started being tracked: neutral, not scored,
+             and no Away control - the week is simply outside the period. */
+          if(_iso && !isWeekTracked(_pndScReportId, _iso)){
+            h+='<td style="text-align:center;padding:10px 6px;border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)" title="Before tracking started for this person">'+
+                 '<div style="'+_pndValLine+';color:var(--txd)">&middot;</div>'+
+                 '<div style="'+_pndActLine+'"></div>'+
+               '</td>';
+            return;
+          }
           if(!_rec){
             h+='<td style="text-align:center;padding:10px 6px;border-top:2px solid var(--brd);border-right:0.5px solid var(--brd);background:var(--sur2);vertical-align:top">'+
                  '<div style="'+_pndValLine+';color:var(--txd)">-</div>'+
@@ -8304,11 +8778,11 @@ function pndToggleAway(iso){
   if(!_pndScReportId || !iso) return;
   /* Weekly Scorecard Lock v1: Away locks with the rest of the week, so a
      missed week cannot be retroactively excused. */
-  if(!canEditWeek(iso)){ _pndLockRefuse(iso); return; }
+  if(!canEditWeek(_pndScReportId, iso)){ _pndLockRefuse(_pndScReportId, iso); return; }
   var all = _pndLoadHuddles();
   var key = _pndScReportId + '__' + iso;
   var rec = all[key] || {answers:{}, away:false, conv:{doing:'',support:''}, goals:[], discuss:[], savedAt:null};
-  _pndStampLockEdit(rec, iso);
+  _pndStampLockEdit(rec, _pndScReportId, iso);
   rec.away = !rec.away;
   rec.savedAt = new Date().toISOString();
   all[key] = rec;
@@ -8362,7 +8836,7 @@ function persistPndScorecard(){
     (m.readings||[]).forEach(function(v, wi){
       var iso = weeks[wi]; if(!iso) return;
       /* Weekly Scorecard Lock v1: never bulk-persist over a locked week. */
-      if(!canEditWeek(iso)) return;
+      if(!canEditWeek(_pndScReportId, iso)) return;
       var key = _pndScReportId + '__' + iso;
       var norm = null;
       if(v==null || v==='') norm = null;
@@ -8579,7 +9053,7 @@ function _pndInstallCellClickAdapter(){
     /* Weekly Scorecard Lock v1: a locked week is read-only. Refuse before
        mutating readings so the grid does not show a value that never saved. */
     var _lockIso = weeks[weekIdx];
-    if(_lockIso && !canEditWeek(_lockIso)){ _pndLockRefuse(_lockIso); return; }
+    if(_lockIso && !canEditWeek(personId, _lockIso)){ _pndLockRefuse(personId, _lockIso); return; }
     /* Three-state cycle: empty -> Yes -> No -> empty. Clearing back to empty
        matters because an unanswered row is a distinct state from an explicit
        No: it lets someone undo a mis-click instead of being stuck on Yes/No. */
@@ -8592,7 +9066,7 @@ function _pndInstallCellClickAdapter(){
       var all = _pndLoadHuddles();
       var key = personId + '__' + iso;
       var rec = all[key] || { answers:{}, away:false, conv:{doing:'',support:''}, goals:[], discuss:[], savedAt:null };
-      _pndStampLockEdit(rec, iso);
+      _pndStampLockEdit(rec, personId, iso);
       rec.answers = rec.answers || {};
       if(next===null){ delete rec.answers[m._rowId]; }
       else { rec.answers[m._rowId] = (next==='Yes') ? 'yes' : 'no'; }
@@ -8777,7 +9251,7 @@ function _pndTile(label, val, valColor, bg){
      Shared keys (team data - synced):
        smb_perf_huddles_v1, smb_perf_quarterly_v1, smb_perf_annual_v1,
        smb_perf_role_standards_v1, smb_perf_role_order_v1,
-       smb_pnd_cadence_v1, smb_pnd_review_dates_v1
+       smb_pnd_cadence_v1, smb_pnd_review_dates_v1, smb_pnd_tracking_start_v1
      Personal (NOT synced): smb_pnd_tours_seen_v1, device id.
 
      This block is STAGING ONLY. Not part of the shipped module; does not go
@@ -8798,7 +9272,11 @@ function _pndTile(label, val, valColor, bg){
     'smb_perf_role_standards_v1',
     'smb_perf_role_order_v1',
     'smb_pnd_cadence_v1',
-    'smb_pnd_review_dates_v1'
+    'smb_pnd_review_dates_v1',
+    'smb_pnd_tracking_start_v1',
+    'smb_pnd_compliance_groups_v1',
+    'smb_pnd_lock_tier_v1',
+    'smb_pnd_compliance_bridge_v1'
   ];
 
   function myVersion(){
