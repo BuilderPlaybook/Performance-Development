@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Performance & Development — Self-Managing Builder</title>
 <style>
-/* === SMB CANON v2.2 BEGIN === DO NOT EDIT - change canon source instead === */
+/* === SMB CANON v2.0 BEGIN === DO NOT EDIT - change canon source instead === */
 :root {
   /* ─── Type scale (locked) ────────────────────────────────────────── */
   --fz-xs:    11px;
@@ -67,29 +67,6 @@
   --overlay-light-08: rgba(255,255,255,0.08);
   --overlay-dark-04:  rgba(0,0,0,0.04);
 }
-
-/* Status chip canon + Shared Tag Pill v1.
-   .chip (Standards v2.32 / D-85) and .tag (Standards v2.36 / D-100) share the same locked
-   silhouette: rounded 12px pill, 1px border, inline-flex, weight 600. Only the colour source
-   differs. .chip pulls from the status palette via .c-<color> semantic modifiers below; .tag
-   pulls from the Category palette (--cat-*) or the Progression palette (--pg-*) at application
-   time. No module hand-rolls a different pill shape - no squared tags, no per-module radius,
-   no inline raw-hex on pill classes.
-   Status semantics locked (v2.32 Status Chip Canon v1):
-   - c-red   = overdue / expired / off-track / below-market / decline
-   - c-amb   = due soon / expiring within 90 days / at-risk / above-market / watch
-   - c-grn   = current / valid / on-track / at-market / proceed
-   - c-blu   = info / neutral / category / stage-in-progress
-   - c-gry   = no data / N/A / not on file
-   VSP_Module_v8.html is the visual reference for chips.
-   VSP status chips + Company category tag = reference for shared pill silhouette. */
-.chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;font-weight:600;font-size:var(--fz-base);white-space:nowrap;border:1px solid transparent}
-.tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;font-weight:600;font-size:var(--fz-body);white-space:nowrap;border:1px solid transparent}
-.c-grn{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
-.c-amb{background:var(--ambb);color:var(--ambt);border-color:var(--amb)}
-.c-red{background:var(--redb);color:var(--redt);border-color:var(--red)}
-.c-blu{background:var(--blub);color:var(--blut);border-color:var(--blu)}
-.c-gry{background:var(--sur2);color:var(--txm);border-color:var(--brd)}
 
 /* ═══════════════════════════════════════════════════════════════════════
    TYPOGRAPHY ROLES (v2.0 - May 20, 2026)
@@ -217,7 +194,7 @@ table th, .card-body table th, .tbl-wrap table th {
   font-size: var(--fz-xs);
 }
 .settings-note { color: var(--txd); font-style: italic; }
-/* === SMB CANON v2.2 END === */
+/* === SMB CANON v2.0 END === */
 /* === SMB SHELL CHROME v1 BEGIN === DO NOT EDIT - change chrome source instead === */
 /* Companion tokens (sidebar line, gold pill bg/ink). Canon tokens used as-is. */
 :root{
@@ -318,108 +295,16 @@ summary:focus-visible,
   border-radius:6px;
 }
 /* === SHELL CHROME v1 END === */
-/* === SMB COMPONENTS v1 BEGIN === DO NOT EDIT - change SMB Components source instead === */
-/* SMB Components v1 (Standards v2.38 / D-102).
-   One locked source of truth for shared UI components, extracted from
-   VSP_Module_v22: buttons, cards, page titles, tabs, filter bar inputs, and
-   the Goals-list row. Every module pastes this block after the SMB CANON and
-   SMB SHELL CHROME blocks. Byte-checked by audit Section P against
-   COMPONENTS_SHA256.
-
-   Chrome-model resolution. This block adopts VSP's inline dark titles as the
-   canonical rendering: .pg-title renders inline at --fz-3xl; .card-title stays
-   dark on neutral card headers. Modules that previously hid .pg-title in favor
-   of a topbar page title, or whitened .card-title on coloured card headers,
-   drop those overrides on the v1 sweep and adopt this block's rendering.
-
-   Goals-list row. The .goal-row class set is the extracted form of VSP v22
-   goalRow() inline styles. Cosmetics live in classes; state-dependent choices
-   are expressed via modifier classes (.off, .cancelled, .done, .muted,
-   .on-track, .all-done, .last). Per-value inline styles remain inline (progress
-   bar width percentage; menu positioning); shared cosmetics do not.
-
-   Not included at v1. .smb-empty (VSP v22 does not carry it as a distinct
-   class set; deferred to a future revision when VSP adopts an empty-state
-   component). Modules keep their current empty states until then.
-
-   --module-accent stays a per-module :root token (each module picks its own
-   restrained hue; VSP #5b8fd6 is the reference). This block does not lock
-   --module-accent because the token exists to differentiate modules; it locks
-   --btn-txt because button text colour is a component property. */
-
-:root {
-  --btn-txt: #374151;
-}
-
-/* PAGE HEADER */
-.pg-title{font-size:var(--fz-3xl);font-weight:700;margin-bottom:4px;letter-spacing:-.01em;color:var(--txt)}
-.pg-sub{color:var(--txm);margin-bottom:20px}
-
-/* CARDS */
-.card{background:var(--sur);border:1px solid var(--brd);border-radius:8px;padding:16px;margin-bottom:14px}
-.card-body{padding:16px;font-size:var(--fz-lg);line-height:1.5}
-.card-title{font-size:var(--fz-lg);font-weight:600;color:var(--txt)}
-
-/* TABS */
-.tab-bar{display:flex;border-bottom:2px solid var(--brd);margin-bottom:16px}
-.tab{padding:8px 18px;font-size:var(--fz-md);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:var(--txm);margin-bottom:-2px;font-weight:500;font-family:inherit}
-.tab.active{color:var(--blu);border-bottom-color:var(--blu);font-weight:600}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:var(--fz-body);font-weight:600;cursor:pointer;border:1px solid var(--brd);background:var(--sur);color:var(--btn-txt);font-family:inherit;transition:all .12s;white-space:nowrap}
-.btn:hover{background:var(--sur2)}
-.btn-sm{padding:6px 12px}
-.btn-primary,.btn-gold{background:var(--gp);color:#fff;border-color:var(--gp)}
-.btn-primary:hover,.btn-gold:hover{background:var(--gpd);border-color:var(--gpd)}
-.btn-blu{background:var(--blu);color:#fff;border-color:var(--blu)}
-.btn-blu:hover{background:var(--bluh);border-color:var(--bluh)}
-.btn-red{background:var(--redb);color:var(--red);border-color:var(--reds)}
-
-/* FILTER BAR */
-.filter-bar input,.filter-bar select{font-size:var(--fz-body);font-family:inherit}
-
-/* GOALS-LIST ROW (implements Goals Row Status Tint v1 from Standards v2.37) */
-.goal-row{background:var(--sur);border-bottom:0.5px solid var(--brd)}
-.goal-row.last{border-bottom:none}
-.goal-row.off{background:var(--redb);border-left:3px solid var(--red)}
-.goal-row.cancelled{background:var(--sur2)}
-.goal-row-main{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer}
-.goal-title{flex:1;min-width:0;font-size:var(--fz-lg);font-weight:500;color:var(--txt);cursor:pointer}
-.goal-title.off{color:var(--red)}
-.goal-title.muted{color:var(--txm)}
-.goal-title.done{text-decoration:line-through}
-.goal-ms{font-size:var(--fz-lg);color:var(--txm);white-space:nowrap;min-width:70px;text-align:right}
-.goal-ms.all-done{color:var(--grn)}
-.goal-progress{display:flex;align-items:center;gap:5px;min-width:80px;cursor:pointer}
-.goal-progress-bar{flex:1;height:5px;background:var(--brd);border-radius:3px;min-width:44px}
-.goal-progress-fill{height:100%;border-radius:3px;transition:width .2s}
-.goal-progress-fill.on-track{background:var(--grn)}
-.goal-progress-fill.off-track{background:var(--red)}
-.goal-progress-fill.done{background:var(--blu)}
-.goal-progress-fill.cancelled{background:var(--txm)}
-.goal-due{font-size:var(--fz-lg);color:var(--txm);white-space:nowrap;min-width:44px;text-align:right}
-.goal-status-select{width:98px;font-size:var(--fz-base);padding:3px 5px;border-width:1.5px;border-style:solid;border-radius:5px;font-weight:500;cursor:pointer;font-family:inherit}
-.goal-status-select.on-track{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
-.goal-status-select.off-track{background:var(--redb);color:var(--redt);border-color:var(--red)}
-.goal-status-select.done{background:var(--blub);color:var(--blut);border-color:var(--blu)}
-.goal-status-select.cancelled{background:var(--sur2);color:var(--txm);border-color:var(--brd)}
-.goal-ctx{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:var(--txm);font-size:var(--fz-lg)}
-.goal-ctx.open{background:var(--sur2)}
-.goal-ctx-menu{position:fixed;background:var(--sur);border:1px solid var(--brd);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.15);z-index:9000;min-width:220px;padding:4px 0}
-.goal-expand{padding:0 14px 12px 36px;background:var(--sur2);border-top:0.5px solid var(--brd)}
-/* === SMB COMPONENTS v1 END === */
 
 /* ---- Module tokens (P&D). Raw hex/rgba in a module :root is the sanctioned
    pattern, same as CRM/HR. Everything else references tokens. ---- */
 :root{
   --sb-line:#2d3f52;
   --sb-gold-accent:#f0d895;
-  --module-accent:#6b8e5a;      /* P&D = muted sage. Growth/development semantic. Distinct from VSP blue #5b8fd6, CRM rust #c0663f, BD purple #8a6fb8, HR teal #3f9d8a. Warmer-neutral so it does not compete with status chip greens/reds on the page. */
+  --module-accent:#4f46e5;      /* P&D = indigo. Distinct from VSP blue #5b8fd6, CRM rust #c0663f, BD purple #8a6fb8, HR teal #3f9d8a. Cool hue that does not conflict with status red. */
   --r-card:8px;
   --r-input:6px;
   --r-pill:999px;
-  --bluh:#1d4ed8;               /* action blue hover - SMB Components v1 companion (verified vs ESign/Marketing in mount) */
-  --reds:#fca5a5;               /* red soft border   - SMB Components v1 companion (verified vs ESign/Marketing in mount) */
   --overlay-light-04:rgba(255,255,255,.04);
   --overlay-dark-45:rgba(15,23,42,.45);
   --p-ink:#000;
@@ -447,10 +332,15 @@ summary:focus-visible,
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
 
-/* ---- Buttons ----
-   .btn / .btn:hover / .btn-sm / .btn-gold(+hover) / .btn-blu(+hover) / .btn-red
-   removed per the v2.38 SMB Components v1 sweep - the locked block owns them.
-   .btn-ghost and .link-btn are P&D-local (not in the block) and stay. ---- */
+/* ---- Buttons ---- */
+.btn{padding:7px 12px;border-radius:var(--r-input);border:1px solid var(--brd);background:var(--sur);color:var(--txb);cursor:pointer;font-family:inherit;line-height:1.2}
+.btn:hover{border-color:var(--brd2)}
+.btn-sm{padding:4px 9px}
+.btn-gold{background:var(--gp);border-color:var(--gp);color:#fff}
+.btn-gold:hover{filter:brightness(.96)}
+.btn-blu{background:var(--blu);border-color:var(--blu);color:#fff}
+.btn-blu:hover{filter:brightness(.96)}
+.btn-red{background:var(--red);border-color:var(--red);color:#fff}
 .btn-ghost{background:transparent}
 .link-btn{background:none;border:none;color:var(--blu);cursor:pointer;font-family:inherit;font-size:var(--fz-body);font-weight:600;padding:0}
 
@@ -552,18 +442,10 @@ summary:focus-visible,
 .q-goal-num{width:28px;height:28px;border-radius:50%;background:var(--sur2);color:var(--txm);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fz-body)}
 .q-goal-text{border:none;background:transparent;font-family:inherit;font-size:var(--fz-lg);color:var(--txt);width:100%;padding:4px 0;line-height:1.4}
 .q-goal-text:focus{outline:none;border-bottom:1px solid var(--blu)}
-/* q-goal-select is the interactive Quarterly Goals status dropdown - a <select>,
-   not a chip. It borrows chip color modifiers (.c-grn / .c-red / .c-blu / .c-gry)
-   from the canon for background/border tinting; the select-specific chrome
-   (padding, cursor, arrow) lives here. */
-.q-goal-select{padding:5px 12px;border-radius:12px;font-size:var(--fz-xs);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;border:1px solid var(--brd);background:var(--sur);color:var(--txm);font-family:inherit;cursor:pointer;flex-shrink:0}
-.q-goal-select:disabled{opacity:.6;cursor:not-allowed}
-/* Chip color modifiers cascade the same tint onto the select background/border
-   so it visually matches the status chip vocabulary without pretending to be
-   a chip element (Section N flags .chip without a .c-* modifier, not the reverse). */
-.q-goal-select.c-grn{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
-.q-goal-select.c-red{background:var(--redb);color:var(--redt);border-color:var(--red)}
-.q-goal-select.c-blu{background:var(--blub);color:var(--blut);border-color:var(--blu)}
+.q-goal-status{padding:5px 12px;border-radius:12px;font-size:var(--fz-xs);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;border:1px solid var(--brd);background:var(--sur2);color:var(--txm);font-family:inherit;cursor:pointer}
+.q-goal-status.done{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
+.q-goal-status.ontrack{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
+.q-goal-status.offtrack{background:var(--redb);color:var(--redt);border-color:var(--red)}
 .q-goal-x{border:none;background:transparent;color:var(--txm);cursor:pointer;font-size:var(--fz-xl);padding:0 4px}
 .q-goal-x:hover{color:var(--red)}
 .q-add-goal{width:100%;padding:14px;border:2px dashed var(--brd);background:transparent;border-radius:6px;cursor:pointer;font-family:inherit;font-size:var(--fz-body);font-weight:600;color:var(--txm);text-align:center}
@@ -579,9 +461,11 @@ summary:focus-visible,
 /* VSP-mirror goal row - matches Core Values row treatment (numbered blue circle) plus editable status */
 .q-vsp-goal{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--sur2);border-radius:6px;margin-bottom:8px}
 .q-vsp-goal-text{flex:1;font-size:var(--fz-lg);color:var(--txt);line-height:1.4}
-/* Measurables mirror status uses the canon .chip / .c-* classes directly.
-   The old .q-vsp-goal-status class is retired; see .q-goal-select above for
-   the interactive dropdown counterpart. */
+.q-vsp-goal-status{padding:5px 12px;border-radius:12px;font-size:var(--fz-xs);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;border:1px solid var(--brd);background:var(--sur);color:var(--txm);font-family:inherit;cursor:pointer;flex-shrink:0}
+.q-vsp-goal-status.ontrack{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
+.q-vsp-goal-status.offtrack{background:var(--redb);color:var(--redt);border-color:var(--red)}
+.q-vsp-goal-status.complete{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
+.q-vsp-goal-status:disabled{opacity:.6;cursor:not-allowed}
 /* Measurables table - VSP-mirror layout */
 .q-meas-tbl{width:100%;border-collapse:collapse;font-size:var(--fz-body)}
 .q-meas-tbl th{padding:10px 8px;text-align:center;background:var(--sur2);border-bottom:1px solid var(--brd);font-size:var(--fz-xs);text-transform:uppercase;letter-spacing:.04em;color:var(--txm);font-weight:700;white-space:nowrap}
@@ -749,108 +633,6 @@ summary:focus-visible,
 .q-archived-hd{display:flex;align-items:center;gap:12px;color:var(--grnt);font-size:var(--fz-body);font-weight:600}
 .q-archived-hd svg{width:18px;height:18px}
 .q-archived-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--grn);color:#fff;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:var(--fz-xs)}
-.q-archived-cta{margin-top:10px;display:flex;justify-content:flex-end}
-.q-arch-next-btn{background:var(--module-accent);color:#fff;border:none;border-radius:6px;padding:9px 16px;font-family:inherit;font-size:var(--fz-body);font-weight:600;cursor:pointer}
-.q-arch-next-btn:hover{filter:brightness(0.92)}
-/* Signature progress bar - top-of-page status widget */
-.q-sig-progress{margin:0 0 16px;padding:12px 16px;background:var(--sur);border:1px solid var(--brd);border-radius:8px;display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;cursor:pointer;transition:background .12s}
-.q-sig-progress:hover{background:var(--sur2)}
-.q-sig-bar-wrap{height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
-.q-sig-bar-fill{height:100%;background:var(--module-accent);transition:width .3s}
-.q-sig-dots{display:flex;gap:6px}
-.q-sig-dot{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:var(--fz-xs);font-weight:700;background:var(--sur2);color:var(--txm);border:1.5px solid var(--brd)}
-.q-sig-dot.signed{background:var(--grnb);color:var(--grnt);border-color:var(--grn)}
-.q-sig-dot.pending{background:var(--sur2);color:var(--txm);border-color:var(--brd)}
-.q-sig-lbl{font-size:var(--fz-body);color:var(--txb);font-weight:600;white-space:nowrap}
-
-/* ═══ DASHBOARD ═══ */
-.dash-card{background:var(--sur);border:1px solid var(--brd);border-radius:8px;margin-bottom:16px;overflow:hidden}
-.dash-card-hd{padding:14px 20px;background:var(--sur2);border-bottom:1px solid var(--brd);display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.dash-t{font-size:var(--fz-lg);font-weight:700;color:var(--txt);margin:0}
-.dash-m{font-size:var(--fz-body);color:var(--txm)}
-.dash-count{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 8px;background:var(--module-accent);color:#fff;border-radius:12px;font-size:var(--fz-xs);font-weight:700;margin-left:8px}
-.dash-card-bd{padding:16px 20px}
-.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
-.dash-person-btn{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--sur);border:1px solid var(--brd);border-radius:6px;cursor:pointer;text-align:left;width:100%;font-family:inherit;transition:background .12s,border-color .12s}
-.dash-person-btn:hover{background:var(--sur2);border-color:var(--module-accent)}
-.dash-person-btn.dash-me{cursor:pointer;background:var(--sur2)}
-.dash-person-avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:var(--fz-body);font-weight:700;color:#fff;flex-shrink:0}
-.dash-person-body{flex:1;min-width:0}
-.dash-person-name{font-size:var(--fz-body);font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dash-person-role{font-size:var(--fz-sm);color:var(--txm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dash-trend-list{display:flex;flex-direction:column;gap:6px}
-/* dash-kpi: VSP KPI-card treatment for the score-trend grid. Left accent bar
-   carries the tone (t-grn / t-amb / t-red), big value, WoW delta, sparkline. */
-.dash-kpi{display:flex;flex-direction:column;gap:10px;padding:14px 16px;background:var(--sur);border:1px solid var(--brd);border-left:4px solid var(--brd);border-radius:6px;cursor:pointer;text-align:left;width:100%;font-family:inherit;transition:background .12s,border-color .12s}
-.dash-kpi:hover{background:var(--sur2)}
-.dash-kpi.t-grn{border-left-color:var(--grn)}
-.dash-kpi.t-amb{border-left-color:var(--amb)}
-.dash-kpi.t-red{border-left-color:var(--red)}
-.dash-kpi-empty{border-left-color:var(--brd);opacity:.85}
-.dash-kpi-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.dash-kpi-name{font-size:var(--fz-body);font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dash-kpi-mid{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.dash-kpi-val{font-size:var(--fz-4xl);font-weight:700;color:var(--txt);line-height:1}
-.dash-kpi-spark{display:inline-flex;align-items:flex-end}
-.dash-kpi-bot{display:flex}
-.dash-kpi-delta{font-size:var(--fz-sm);font-weight:600}
-.dash-kpi-delta.up{color:var(--grnt)}
-.dash-kpi-delta.down{color:var(--redt)}
-.dash-kpi-delta.flat{color:var(--txm)}
-.dash-kpi-cta{font-size:var(--fz-body);color:var(--module-accent);font-weight:600}
-/* Huddle-week indicator on the Weekly Huddle meta strip */
-.pd-cad-note{margin-top:12px;padding:8px 12px;border-radius:6px;font-size:var(--fz-body);font-weight:500}
-.pd-cad-note.is-huddle{background:var(--grnb);color:var(--grnt);border:1px solid var(--grn)}
-.pd-cad-note.off-week{background:var(--sur2);color:var(--txm);border:1px solid var(--brd)}
-/* Cadence tag next to person name on dashboard huddle cards */
-.dash-person-cad{display:inline-block;margin-left:8px;padding:1px 7px;background:var(--sur2);color:var(--txm);border:1px solid var(--brd);border-radius:10px;font-size:var(--fz-xs);font-weight:600;vertical-align:middle}
-.dash-person-offweek{opacity:.72}
-.dash-person-offweek:hover{opacity:1}
-/* Upcoming reviews list */
-.dash-rev-list{display:flex;flex-direction:column;gap:6px}
-.dash-rev-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--brd)}
-.dash-rev-row:last-child{border-bottom:0}
-.dash-rev-name{font-size:var(--fz-body);color:var(--txt);font-weight:500}
-.dash-rev-cell{display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-family:inherit;padding:4px 6px;border-radius:6px}
-.dash-rev-cell:hover{background:var(--sur2)}
-.dash-rev-lbl{font-size:var(--fz-sm);color:var(--txm);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
-/* Review scheduling card */
-.q-schedule .q-sched-row{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
-.q-sched-actions{display:flex;gap:8px;align-items:center}
-.q-sched-set{margin-top:12px;font-size:var(--fz-body);color:var(--grnt);font-weight:600}
-.q-int-badge{display:inline-block;margin-left:6px;padding:1px 6px;background:var(--ambb);color:var(--ambt);border:1px solid var(--amb);border-radius:8px;font-size:var(--fz-xs);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
-/* Meta-strip More overflow menu */
-.q-more-wrap{position:relative;display:inline-block}
-.q-more-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);min-width:180px;background:var(--sur);border:1px solid var(--brd);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);z-index:30;overflow:hidden}
-.q-more-menu.open{display:block}
-.q-more-item{display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;font-family:inherit;font-size:var(--fz-body);color:var(--txt);cursor:pointer}
-.q-more-item:hover{background:var(--sur2)}
-.q-more-file{cursor:pointer}
-/* Weekly Discussed marker */
-.pd-discussed{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--brd);border-radius:6px;background:var(--sur);cursor:pointer;font-size:var(--fz-body);color:var(--txm);white-space:nowrap}
-.pd-discussed.is-done{background:var(--grnb);border-color:var(--grn);color:var(--grnt);font-weight:600}
-.pd-discussed input{cursor:pointer;margin:0}
-/* VSP meeting-context note + synced cadence display */
-.pd-meeting-note{margin-top:12px;padding:8px 12px;border-radius:6px;background:var(--sur2);border:1px solid var(--brd);font-size:var(--fz-body);color:var(--txb)}
-.pd-meeting-note .q-src{margin-right:6px}
-.pd-cad-locked{padding:7px 12px;border:1px solid var(--brd);border-radius:6px;background:var(--sur2);font-size:var(--fz-body);color:var(--txm);white-space:nowrap}
-/* Purpose + values banner inside the Purpose, Core Values & Seat Fit section */
-.q-vf-purpose{margin:0 0 4px;padding:10px 14px;background:var(--sur2);border:1px solid var(--brd);border-radius:6px;font-size:var(--fz-body);color:var(--txt);line-height:1.45}
-.q-vf-purpose-lbl{display:inline-block;margin-right:8px;font-size:var(--fz-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--module-accent)}
-.dash-trend-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--brd)}
-.dash-trend-row:last-child{border-bottom:0}
-.dash-trend-name{font-size:var(--fz-body);color:var(--txt);font-weight:500}
-.dash-trend-spark{display:inline-flex;align-items:center}
-.dash-alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.dash-alert-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:12px 14px;background:var(--sur2);border-radius:6px;cursor:pointer;transition:background .12s}
-.dash-alert-row:hover{background:var(--bg)}
-.dash-alert-name{font-size:var(--fz-body);color:var(--txt);font-weight:600}
-.dash-alert-body{font-size:var(--fz-body);color:var(--txm)}
-.dash-alert-cta{font-size:var(--fz-body);color:var(--module-accent);font-weight:600}
-.dash-tot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.dash-tot{padding:16px;background:var(--sur2);border-radius:6px;text-align:center}
-.dash-tot-n{font-size:var(--fz-3xl);font-weight:700;color:var(--module-accent);line-height:1}
-.dash-tot-l{font-size:var(--fz-body);color:var(--txm);margin-top:6px}
 
 /* Archived jump list under meta strip */
 .q-archived-list{margin-bottom:16px;font-size:var(--fz-body);color:var(--txm)}
@@ -889,7 +671,7 @@ summary:focus-visible,
   .q-goal,.q-role-row,.q-uf-row,.q-convo-item,.q-appr,.q-de,.q-paper-card,.kpi-card{background:var(--p-paper) !important;border:1pt solid var(--p-line) !important;color:var(--p-ink) !important;box-shadow:none !important}
   .q-cv-item{background:var(--p-tint) !important;color:var(--p-ink) !important}
   .q-cv-num,.q-convo-num,.q-appr.current .q-appr-num,.q-goal-num{background:var(--p-ink) !important;color:var(--p-paper) !important}
-  .q-yn-btn,.q-ynm-btn,.q-val-btn,.q-goal-select,.chip{border:1pt solid var(--p-line) !important;background:var(--p-paper) !important;color:var(--p-ink) !important;padding:2pt 6pt !important;font-size:9pt !important}
+  .q-yn-btn,.q-ynm-btn,.q-val-btn,.q-goal-status{border:1pt solid var(--p-line) !important;background:var(--p-paper) !important;color:var(--p-ink) !important;padding:2pt 6pt !important;font-size:9pt !important}
   .q-yn-btn.on,.q-ynm-btn.on,.q-val-btn.on{background:var(--p-ink) !important;color:var(--p-paper) !important;border-color:var(--p-ink) !important}
   .q-scale-cell{border:1pt solid var(--p-line) !important;background:var(--p-paper) !important;color:var(--p-ink) !important}
   .q-scale-cell.filled{background:var(--p-ink) !important;color:var(--p-paper) !important}
@@ -980,30 +762,6 @@ summary:focus-visible,
 .soon li{padding:7px 0;border-bottom:1px solid var(--brd);color:var(--txb)}
 
 @media(max-width:820px){.conv-grid{grid-template-columns:1fr}.score-grid{grid-template-columns:repeat(2,1fr)}}
-
-/* ═══ TOUR ENGINE v1 CSS (ported from VSP_Module_v10) ═══ */
-.tour-overlay{position:fixed;background:rgba(15,23,42,.65);z-index:9000;pointer-events:auto;transition:top .25s,left .25s,width .25s,height .25s}
-.tour-spotlight{position:fixed;box-shadow:0 0 0 4px rgba(107,142,90,.55);border-radius:6px;z-index:9001;pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s}
-.tour-tooltip{position:fixed;width:340px;max-width:calc(100vw - 32px);background:#fff;border-radius:12px;box-shadow:0 20px 50px rgba(15,23,42,.30);z-index:9002;font-family:inherit;overflow:hidden;animation:tourFadeIn .2s ease-out}
-.tour-tooltip[data-pos="center"]{width:440px;max-width:calc(100vw - 32px);animation:tourFadeInCenter .2s ease-out}
-@keyframes tourFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes tourFadeInCenter{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
-.tour-progress-bar{height:3px;background:var(--bg)}
-.tour-progress-fill{height:100%;background:var(--module-accent);transition:width .25s}
-.tour-tt-content{padding:18px 20px 14px}
-.tour-tt-step{font-size:var(--fz-xs);font-weight:700;color:var(--module-accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
-.tour-tt-title{font-size:var(--fz-body);font-weight:700;color:var(--txt);margin:0 0 6px}
-.tour-tt-body{font-size:var(--fz-sm);line-height:1.55;color:var(--txb)}
-.tour-tt-body strong,.tour-tt-body b{color:var(--txt)}
-.tour-tt-footer{padding:10px 16px;border-top:1px solid var(--bg);display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--sur2)}
-.tour-skip{background:none;border:none;font-size:var(--fz-sm);color:var(--txd);cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:4px}
-.tour-skip:hover{color:var(--txm);background:var(--bg)}
-.tour-nav-btns{display:flex;gap:6px}
-.tour-btn{padding:6px 12px;border-radius:6px;font-family:inherit;font-size:var(--fz-sm);font-weight:600;cursor:pointer;border:1px solid transparent}
-.tour-btn-ghost{background:transparent;color:var(--txb);border-color:var(--brd)}
-.tour-btn-ghost:hover{background:var(--sur2);color:var(--txt)}
-.tour-btn-primary{background:var(--module-accent);color:#fff;border-color:var(--module-accent)}
-.tour-btn-primary:hover{filter:brightness(0.92)}
 
 </style>
 </head>
@@ -1097,16 +855,16 @@ function colorForSlot(s){ if(s==null)s=0; return COLOR_SLOTS[s%7]; }
 
 /* LIDA seed - mirrors HR org-chart people (used only when HR is not loaded). */
 var PD_SEED_PEOPLE=[
-  {id:'p1', first:'Dave',  last:'Stephens', initials:'DS', roleLabel:'President',        supervisor:true, hr:true,  status:'active', colorSlot:1, reportsTo:'',   email:'dave@lidahomes.ca'},
-  {id:'p2', first:'Lisa',  last:'Stephens', initials:'LS', roleLabel:'Controller',       supervisor:true, hr:true,  status:'active', colorSlot:3, reportsTo:'p3', email:'lisa@lidahomes.ca'},
-  {id:'p3', first:'Terry', last:'Pearson',  initials:'TP', roleLabel:'VP Construction',  supervisor:true, hr:false, status:'active', colorSlot:0, reportsTo:'p1', email:'terry@lidahomes.ca'},
-  {id:'p7', first:'Will',  last:'Liddell',  initials:'WL', roleLabel:'Sr. PM',           supervisor:true, hr:false, status:'active', colorSlot:2, reportsTo:'p3', email:'will@lidahomes.ca'},
-  {id:'p8', first:'Keith', last:'Tennert',  initials:'KT', roleLabel:'Project Manager',  supervisor:false,hr:false, status:'active', colorSlot:4, reportsTo:'p7', email:'keith@lidahomes.ca'},
-  {id:'p9', first:'Daniel',last:'Turgeon',       initials:'DT', roleLabel:'Foreman',          supervisor:false,hr:false, status:'active', colorSlot:5, reportsTo:'p7', email:'daniel@lidahomes.ca'},
-  {id:'p10',first:'Adrian',last:'Surdu',         initials:'AS', roleLabel:'Foreman',          supervisor:false,hr:false, status:'active', colorSlot:6, reportsTo:'p7', email:'adrian@lidahomes.ca'},
-  {id:'p11',first:'Daniel',last:'Blanco Guillen',initials:'DB', roleLabel:'Foreman',          supervisor:false,hr:false, status:'active', colorSlot:7, reportsTo:'p7', email:''},
-  {id:'p12',first:'Vanessa',last:'',              initials:'VA', roleLabel:'Accounting Administrator', supervisor:false,hr:false, status:'active', colorSlot:8, reportsTo:'p2', email:'vanessa@lidahomes.ca'},
-  {id:'p13',first:'Mika',   last:'Nishimura',     initials:'MN', roleLabel:'Client Experience & Interior Design Manager', supervisor:false,hr:false, status:'active', colorSlot:9, reportsTo:'p3', email:'mika@lidahomes.ca'}
+  {id:'p1', first:'Dave',  last:'Stephens', initials:'DS', roleLabel:'President',        supervisor:true, hr:true,  status:'active', colorSlot:1, reportsTo:''},
+  {id:'p2', first:'Lisa',  last:'Stephens', initials:'LS', roleLabel:'Controller',       supervisor:true, hr:true,  status:'active', colorSlot:3, reportsTo:'p3'},
+  {id:'p3', first:'Terry', last:'Pearson',  initials:'TP', roleLabel:'VP Construction',  supervisor:true, hr:false, status:'active', colorSlot:0, reportsTo:'p1'},
+  {id:'p7', first:'Will',  last:'Liddell',  initials:'WL', roleLabel:'Sr. PM',           supervisor:true, hr:false, status:'active', colorSlot:2, reportsTo:'p3'},
+  {id:'p8', first:'Keith', last:'Tennert',  initials:'KT', roleLabel:'Project Manager',  supervisor:false,hr:false, status:'active', colorSlot:4, reportsTo:'p7'},
+  {id:'p9', first:'Daniel',last:'Turgeon',       initials:'DT', roleLabel:'Foreman',          supervisor:false,hr:false, status:'active', colorSlot:5, reportsTo:'p7'},
+  {id:'p10',first:'Adrian',last:'Surdu',         initials:'AS', roleLabel:'Foreman',          supervisor:false,hr:false, status:'active', colorSlot:6, reportsTo:'p7'},
+  {id:'p11',first:'Daniel',last:'Blanco Guillen',initials:'DB', roleLabel:'Foreman',          supervisor:false,hr:false, status:'active', colorSlot:7, reportsTo:'p7'},
+  {id:'p12',first:'Vanessa',last:'',              initials:'VA', roleLabel:'Accounting Administrator', supervisor:false,hr:false, status:'active', colorSlot:8, reportsTo:'p2'},
+  {id:'p13',first:'Mika',   last:'Nishimura',     initials:'MN', roleLabel:'Client Experience & Interior Design Manager', supervisor:false,hr:false, status:'active', colorSlot:9, reportsTo:'p3'}
 ];
 function people(){
   if(window.BOSHR && typeof window.BOSHR.getAll==='function'){
@@ -1314,112 +1072,6 @@ ROLE_STANDARDS['Accounting Administrator'] = {
     ]}
   ]
 };
-
-/* ============================================================
-   MEETING CADENCE (per-role) - D-97
-   The scorecard is always weekly: every week gets filled and scored. Cadence
-   controls only the MEETING rhythm - which weeks a huddle is scheduled, and the
-   dashboard's "due this week" logic. It never changes score math or the grid.
-   Values: 'weekly' | 'biweekly' | 'monthly'. LIDA seed: biweekly default,
-   Foreman monthly. Persisted per tenant; admin-editable from the meta strip.
-   Biweekly anchor = first Monday of the current year, so all biweekly roles
-   share one rhythm. Monthly = the first Monday of each month.
-   ============================================================ */
-/* Storage Version Policy v1: module-level data-model version. Bumps ONLY on a
-   true breaking key/shape change; user data is never wiped by a bump. The
-   staging adapter also uses it to refuse cross-version cloud loads/overwrites. */
-var PD_STORAGE_VERSION = 1;
-var CADENCE_STORAGE_VERSION = 1;
-var ROLE_CADENCE_DEFAULT = {
-  'Foreman': 'monthly'
-  /* every other role falls through to LIDA_CADENCE_FALLBACK */
-};
-var LIDA_CADENCE_FALLBACK = 'biweekly';                       /* LIDA runs biweekly; system-wide default for a fresh tenant would be 'weekly' */
-
-function _pndLoadCadence(){
-  try{
-    var raw = localStorage.getItem('smb_pnd_cadence_v1');
-    if(raw){ var o = JSON.parse(raw); if(o && o.map) return o.map; }
-  }catch(e){}
-  /* Seed from defaults on first load */
-  return Object.assign({}, ROLE_CADENCE_DEFAULT);
-}
-function _pndSaveCadence(map){
-  try{ localStorage.setItem('smb_pnd_cadence_v1', JSON.stringify({v:CADENCE_STORAGE_VERSION, map:map})); }catch(e){}
-}
-function cadenceForRole(roleLabel){
-  var map = _pndLoadCadence();
-  if(map && map[roleLabel]) return map[roleLabel];
-  if(ROLE_CADENCE_DEFAULT[roleLabel]) return ROLE_CADENCE_DEFAULT[roleLabel];
-  return LIDA_CADENCE_FALLBACK;
-}
-function setCadenceForRole(roleLabel, cadence){
-  var map = _pndLoadCadence();
-  map[roleLabel] = cadence;
-  _pndSaveCadence(map);
-}
-/* Effective cadence for a PERSON. The VSP meeting contract wins when live (VSP
-   owns meetings; the huddle is one agenda item in the person's 1:1 - D-98
-   direction). ROLE_CADENCE is the fallback when VSP is not mounted or has no
-   meeting for the person. Returns { cadence, source: 'VSP'|'local', meeting }. */
-function cadenceForPerson(person){
-  if(!person) return { cadence: LIDA_CADENCE_FALLBACK, source: 'local', meeting: null };
-  var mr = _pndReadVspMeeting(person.id);
-  if(mr.source === 'VSP' && mr.meeting && mr.meeting.cadence){
-    return { cadence: mr.meeting.cadence, source: 'VSP', meeting: mr.meeting };
-  }
-  return { cadence: cadenceForRole(person.roleLabel), source: 'local', meeting: null };
-}
-
-/* First Monday of a given year - the biweekly anchor. */
-function _firstMondayOfYear(year){
-  var d = new Date(year, 0, 1);
-  var day = d.getDay();                                       /* 0 Sun .. 6 Sat */
-  var offset = (day===1) ? 0 : ((8 - day) % 7);
-  d.setDate(d.getDate() + offset);
-  return d;
-}
-/* Is a given ISO Monday a scheduled huddle week for this person?
-   Cadence comes from cadenceForPerson (VSP contract first, local fallback).
-   Biweekly parity anchors to the VSP meeting's nextDate when the contract
-   provides one, so P&D's rhythm matches the actual scheduled 1:1 rather than
-   assuming the first-Monday-of-year anchor. */
-function isHuddleWeek(person, weekIso){
-  if(!person || !weekIso) return true;
-  var cp = cadenceForPerson(person);
-  var cad = cp.cadence;
-  if(cad === 'weekly') return true;
-  var mon = new Date(weekIso+'T00:00:00');
-  if(cad === 'monthly'){
-    /* First Monday of that month is the huddle week */
-    return weekOfMonthFor(weekIso) === 1;
-  }
-  if(cad === 'biweekly'){
-    var anchor;
-    if(cp.source==='VSP' && cp.meeting && cp.meeting.nextDate){
-      anchor = mondayOf(new Date(cp.meeting.nextDate+'T00:00:00'));
-    } else {
-      anchor = _firstMondayOfYear(mon.getFullYear());
-    }
-    var weeksSince = Math.round((mon - anchor) / (7*24*3600*1000));
-    return (weeksSince % 2) === 0;
-  }
-  return true;
-}
-/* Next scheduled huddle Monday on or after fromIso for this person. */
-function nextHuddleDate(person, fromIso){
-  var iso = fromIso || (state && state.weekIso) || isoDate(mondayOf(new Date()));
-  var mon = mondayOf(new Date(iso+'T00:00:00'));
-  for(var i=0;i<60;i++){                                      /* cap the search */
-    var wIso = isoDate(mon);
-    if(isHuddleWeek(person, wIso)) return wIso;
-    mon = new Date(mon.getTime() + 7*24*3600*1000);
-  }
-  return iso;
-}
-function cadenceLabel(cad){
-  return cad==='weekly'?'Weekly':cad==='biweekly'?'Biweekly':cad==='monthly'?'Monthly':cad;
-}
 function standardFor(person, weekIso){
   if(!person) return null;
   var s = ROLE_STANDARDS[person.roleLabel];
@@ -1512,17 +1164,16 @@ function weekLabel(iso){
 
 /* ---- State ---- */
 var state = {
-  page:'dashboard',                                          /* landing page - team roll-up first, then Weekly / Quarterly / Annual on click */
+  page:'huddle',
   reportId:null,
   weekIso:null,
   historyOpen:false,
-  qMoreOpen:false,                                           /* meta-strip More overflow menu */
   openGroups:{}
 };
 
 /* Per (report, week) huddle record */
 function recKey(){ return state.reportId+'__'+state.weekIso; }
-function blankRec(){ return {answers:{}, away:false, conv:{doing:'',support:''}, goals:[], discuss:[], discussed:false, discussedAt:null, savedAt:null}; }
+function blankRec(){ return {answers:{}, away:false, conv:{doing:'',support:''}, goals:[], discuss:[], savedAt:null}; }
 function getRec(){
   var all = pdLoad('huddles', {});
   return all[recKey()] || blankRec();
@@ -1568,23 +1219,8 @@ function logHistory(reportId, weekIso, rec){
 /* ============================================================
    SHELL
    ============================================================ */
-/* Per-module sidebar icon map, ported verbatim from VSP (Shell Standard v1.4).
-   Every module gets its own icon in the nav; the old single hamburger icon for
-   all modules did not match the rest of the suite. */
-var NAV_MODULE_ICON = {vsp:"star",owner:"star",coo:"chart",cfo:"chart",crm:"trend",marketing:"trend",bd:"trend",sales:"trend",cx:"users",pm:"check",hr:"users",pnd:"chart",playbooks:"file",risk:"file",am:"home",esign:"file",settings:"file",property:"home",dev:"file",qbd:"chart"};
-var NAV_ICONS={
-  star:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>',
-  users:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
-  trend:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>',
-  chart:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
-  check:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
-  home:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>',
-  clock:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-  file:'<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>'
-};
-function iconSvg(moduleId){
-  var key = NAV_MODULE_ICON[moduleId] || 'file';
-  return NAV_ICONS[key] || NAV_ICONS.file;
+function iconSvg(){
+  return '<svg class="icn" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
 }
 function chevSvg(){
   return '<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
@@ -1600,7 +1236,7 @@ function renderNav(){
       var active = (m.id===MODULE_ID);
       var open = active || !!state.openGroups[m.id];
       h += '<div class="sb-group'+(open?' open':'')+'">';
-      h += '<button class="sb-group-hd" onclick="toggleGroup(\''+m.id+'\')">'+iconSvg(m.id)+'<span>'+esc(m.label)+'</span>'+chevSvg()+'</button>';
+      h += '<button class="sb-group-hd" onclick="toggleGroup(\''+m.id+'\')">'+iconSvg()+'<span>'+esc(m.label)+'</span>'+chevSvg()+'</button>';
       h += '<div class="sb-children">';
       if(active){
         PD_PAGES.forEach(function(pg){
@@ -1615,10 +1251,10 @@ function renderNav(){
   return h;
 }
 var PD_PAGES = [
-  {id:'dashboard', label:'Dashboard'},
   {id:'huddle', label:'Weekly Performance Huddle'},
   {id:'quarterly', label:'Quarterly Performance Huddle'},
-  {id:'annual', label:'Annual Performance Development Plan'}
+  {id:'annual', label:'Annual Performance Development Plan'},
+  {id:'dashboard', label:'Dashboard'}
 ];
 function toggleGroup(id){
   if(id===MODULE_ID) return;
@@ -1678,437 +1314,11 @@ function renderPage(){
 }
 
 function renderDashboardSoon(){
-  return renderDashboard();
-}
-
-/* ============================================================
-   DASHBOARD - role-aware landing page
-   Supervisors and admins get a team roll-up (this week's huddle status
-   per direct report, weekly-score trends, pending sign-offs, upcoming
-   reviews). Employees get a personal roll-up (my scorecard status this
-   week, my last score, my upcoming quarterly, anything awaiting my sign-off).
-   ============================================================ */
-function renderDashboard(){
-  var mode = pdAccessMode();
-  var cu = currentUser();
-  var visiblePeople = pdVisiblePeople();
-  var thisMonday = isoDate(mondayOf(new Date()));
-  var thisMondayLabel = _pndFormatDateShort(thisMonday);
-  var nextSundayLabel = _pndFormatDateShort(addDays(thisMonday, 6));
-
-  var h = '';
-  h += '<div class="pg-h"><div><h1 class="pg-title">Performance Dashboard</h1>'+
-       '<div class="pg-sub">Week of '+thisMondayLabel+' to '+nextSundayLabel+
-       (cu ? ' &middot; '+esc(fullName(cu))+' &middot; '+esc(mode==='admin'?'Admin':mode==='supervisor'?'Supervisor':'Employee') : '')+'</div></div></div>';
-
-  if(mode === 'employee'){
-    /* Employee view: my scorecard status, my next quarterly, anything awaiting me */
-    h += _pndDashboardEmployee(cu, thisMonday);
-  } else {
-    /* Supervisor / Admin view: team roll-up */
-    h += _pndDashboardSupervisor(cu, visiblePeople, thisMonday, mode==='admin');
-  }
-
-  return h;
-}
-
-/* ---- Dashboard helpers ---- */
-function _pndFormatDateShort(iso){
-  if(!iso) return '';
-  var d = new Date(iso+'T00:00:00');
-  var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
-  return mo+' '+d.getDate()+', '+d.getFullYear();
-}
-
-/* Read this-week's huddle status for a person. Returns 'complete', 'in-progress',
-   'not-started', or 'away'. Complete = every row answered; in-progress = at least
-   one row answered but not all; away = week marked Away; not-started = no data. */
-function _pndHuddleStatusThisWeek(personId, weekIso){
-  var std = standardFor(personById(personId));
-  if(!std) return 'no-std';
-  if(std.rotates){
-    /* Rotating role: use the phase active for this week */
-    var phase = activePhaseFor(personById(personId), weekIso);
-    std = ROLE_STANDARDS[personById(personId).roleLabel].weeks[phase-1].items;
-  }
-  var m = _pndLoadHuddles ? _pndLoadHuddles() : {};
-  var key = personId+'__'+weekIso;
-  var rec = m[key];
-  if(!rec) return 'not-started';
-  if(rec.away) return 'away';
-  var answers = rec.answers || {};
-  var answered = std.filter(function(r){ return answers[r.id]==='yes' || answers[r.id]==='no'; }).length;
-  if(answered === 0) return 'not-started';
-  if(answered < std.length) return 'in-progress';
-  return 'complete';
-}
-/* Last N weeks' scores for a person for the mini-trend widget. Returns array of
-   {iso, pct, away} newest-last. */
-function _pndLastNScores(personId, weekIso, n){
-  var out = [];
-  var d = new Date(weekIso+'T00:00:00');
-  d.setDate(d.getDate() - (n-1)*7);
-  var m = _pndLoadHuddles ? _pndLoadHuddles() : {};
-  var person = personById(personId);
-  for(var i=0; i<n; i++){
-    var iso = isoDate(d);
-    var key = personId+'__'+iso;
-    var rec = m[key];
-    var std = standardFor(person);
-    if(std && std.rotates){
-      var phase = activePhaseFor(person, iso);
-      std = ROLE_STANDARDS[person.roleLabel].weeks[phase-1].items;
-    }
-    if(!rec || !std){ out.push({iso:iso, pct:null, away:false, hardFail:false}); }
-    else if(rec.away){ out.push({iso:iso, pct:null, away:true, hardFail:false}); }
-    else {
-      var yes=0, total=std.length, hard=false;
-      std.forEach(function(row){
-        var v = (rec.answers||{})[row.id];
-        if(v==='yes') yes++;
-        else if(row.hard) hard = true;
-      });
-      var pct = hard ? 0 : Math.round((yes/total)*100);
-      out.push({iso:iso, pct:pct, away:false, hardFail:hard});
-    }
-    d.setDate(d.getDate()+7);
-  }
-  return out;
-}
-
-/* Supervisor / Admin dashboard: team roll-up. */
-function _pndDashboardSupervisor(cu, visiblePeople, thisMonday, isAdmin){
-  var h = '';
-  /* Filter to direct reports for this-week's huddle grid.
-     For an admin (no team direction), just show every visible person with a scorecard. */
-  var reports = visiblePeople.filter(function(p){
-    if(cu && p.id===cu.id) return false;                     /* skip self */
-    var std = standardFor(p); return !!std;                   /* skip roles with no scorecard */
-  });
-
-  /* Section: This week's huddles - honors per-role meeting cadence. On an off-week
-     (biweekly/monthly role whose meeting is not scheduled this week), the card shows
-     "Not due this week" instead of nagging with "Not started". */
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">This week\'s huddles</h2><span class="dash-m">Click a person to open their weekly huddle</span></div><div class="dash-card-bd">';
-  if(!reports.length){
-    h += '<div class="empty" style="padding:20px">No direct reports with a weekly scorecard in your scope.</div>';
-  } else {
-    h += '<div class="dash-grid">';
-    reports.forEach(function(p){
-      var isDue = isHuddleWeek(p, thisMonday);
-      var st = _pndHuddleStatusThisWeek(p.id, thisMonday);
-      var pillCls, pillLbl;
-      if(!isDue){
-        pillCls = 'c-gry'; pillLbl = 'Not due this week';
-      } else {
-        pillCls = st==='complete'?'c-grn':st==='in-progress'?'c-amb':st==='away'?'c-blu':'c-gry';
-        pillLbl = st==='complete'?'Complete':st==='in-progress'?'In progress':st==='away'?'Away':'Not started';
-      }
-      var cad = cadenceForPerson(p).cadence;
-      var cadTag = cad!=='weekly' ? '<span class="dash-person-cad">'+cadenceLabel(cad)+'</span>' : '';
-      h += '<button type="button" class="dash-person-btn'+(!isDue?' dash-person-offweek':'')+'" onclick="pndOpenPersonHuddle(\''+p.id+'\',\''+thisMonday+'\')">'+
-             '<div class="dash-person-avatar" style="background:'+_personBg(p)+'">'+esc(p.initials||'')+'</div>'+
-             '<div class="dash-person-body"><div class="dash-person-name">'+esc(fullName(p))+cadTag+'</div>'+
-             '<div class="dash-person-role">'+esc(p.roleLabel||'')+'</div></div>'+
-             '<span class="chip '+pillCls+'">'+esc(pillLbl)+'</span>'+
-           '</button>';
-    });
-    h += '</div>';
-  }
-  h += '</div></div>';
-
-  /* Section: 4-week weekly score trend - VSP KPI-card treatment.
-     One card per person: big latest-score number, status chip, WoW delta arrow,
-     4-week sparkline. No-data people get a muted card with a start-huddle CTA
-     so the empty state is actionable rather than dead. */
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">Weekly Scorecard - 4-week trend</h2><span class="dash-m">Scorecard percentage per person. Anyone below 80% or trending down needs attention</span></div><div class="dash-card-bd">';
-  if(!reports.length){
-    h += '<div class="empty" style="padding:20px">No direct reports with a scorecard.</div>';
-  } else {
-    h += '<div class="dash-grid">';
-    reports.forEach(function(p){
-      var scores = _pndLastNScores(p.id, thisMonday, 4);
-      var withData = scores.filter(function(s){return s.pct!=null;});
-      var latest = withData.length ? withData[withData.length-1].pct : null;
-      if(latest==null){
-        /* Actionable empty card */
-        h += '<button type="button" class="dash-kpi dash-kpi-empty" onclick="pndOpenPersonHuddle(\''+p.id+'\',\''+thisMonday+'\')">'+
-               '<div class="dash-kpi-top"><span class="dash-kpi-name">'+esc(fullName(p))+'</span><span class="chip c-gry">No data</span></div>'+
-               '<div class="dash-kpi-cta">No scorecard entries yet &rarr;</div>'+
-             '</button>';
-        return;
-      }
-      var prev = withData.length>1 ? withData[withData.length-2].pct : null;
-      var delta = prev==null ? null : latest - prev;
-      var latestWk = withData[withData.length-1];
-      var tone = latest>=90?'grn':latest>=80?'amb':'red';
-      var chipCls = latest>=90?'c-grn':latest>=80?'c-amb':'c-red';
-      var chipLbl = latest>=90?'On Track':latest>=80?'Watch':'Off Track';
-      var deltaHtml = '';
-      if(latestWk && latestWk.hardFail){
-        /* Score is pinned to 0% by a Priority Rule. Say why, or the card looks frozen. */
-        deltaHtml = '<span class="dash-kpi-delta down">&#9888; Priority Rule not met</span>';
-      } else if(delta!=null && delta!==0){
-        var up = delta>0;
-        deltaHtml = '<span class="dash-kpi-delta '+(up?'up':'down')+'">'+(up?'&#9650;':'&#9660;')+' '+Math.abs(delta)+'% vs last week</span>';
-      } else if(delta===0){
-        deltaHtml = '<span class="dash-kpi-delta flat">&#8212; level vs last week</span>';
-      }
-      h += '<button type="button" class="dash-kpi t-'+tone+'" onclick="pndOpenPersonHuddle(\''+p.id+'\',\''+thisMonday+'\')">'+
-             '<div class="dash-kpi-top"><span class="dash-kpi-name">'+esc(fullName(p))+'</span><span class="chip '+chipCls+'">'+chipLbl+'</span></div>'+
-             '<div class="dash-kpi-mid"><span class="dash-kpi-val">'+latest+'%</span><span class="dash-kpi-spark">'+_pndRenderSparkline(scores)+'</span></div>'+
-             (deltaHtml ? '<div class="dash-kpi-bot">'+deltaHtml+'</div>' : '')+
-           '</button>';
-    });
-    h += '</div>';
-  }
-  h += '</div></div>';
-
-  /* Section: Awaiting my sign-off (Quarterly + Annual) */
-  var myAlerts = ((window.SMB_ALERT_MAP && window.SMB_ALERT_MAP.pnd)||[]).filter(function(a){
-    return cu && a.targetPersonId === cu.id;
-  });
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">Awaiting your sign-off <span class="dash-count">'+myAlerts.length+'</span></h2><span class="dash-m">Quarterly and Annual reviews that need your signature</span></div><div class="dash-card-bd">';
-  if(!myAlerts.length){
-    h += '<div class="empty" style="padding:20px">Nothing waiting on you. Nice.</div>';
-  } else {
-    h += '<ul class="dash-alerts">';
-    myAlerts.forEach(function(a){
-      var subj = personById(a.subjectPersonId);
-      var when = a.year && a.q ? (a.q+' '+a.year) : (a.year||'');
-      h += '<li class="dash-alert-row" onclick="'+esc(a.href||'')+'">'+
-             '<span class="dash-alert-name">'+esc(subj?fullName(subj):a.subjectPersonId)+'</span>'+
-             '<span class="dash-alert-body">'+esc(a.body||('Quarterly '+when))+'</span>'+
-             '<span class="dash-alert-cta">Open &rarr;</span>'+
-           '</li>';
-    });
-    h += '</ul>';
-  }
-  h += '</div></div>';
-
-  /* Section: Upcoming reviews - per direct report, next Quarterly + Annual due,
-     flagging overdue. Answers "who am I behind on" across the longer cadences,
-     not just weekly. */
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">Upcoming reviews</h2><span class="dash-m">Quarterly and Annual review status per person</span></div><div class="dash-card-bd">';
-  if(!reports.length){
-    h += '<div class="empty" style="padding:20px">No direct reports in your scope.</div>';
-  } else {
-    h += '<div class="dash-rev-list">';
-    reports.forEach(function(p){
-      var q = _pndReviewStatus(p, 'quarterly');
-      var a = _pndReviewStatus(p, 'annual');
-      h += '<div class="dash-rev-row">'+
-             '<span class="dash-rev-name">'+esc(fullName(p))+'</span>'+
-             '<button type="button" class="dash-rev-cell" onclick="pndOpenReview(\''+p.id+'\',\'quarterly\')"><span class="dash-rev-lbl">Quarterly</span><span class="chip '+q.cls+'">'+esc(q.lbl)+'</span></button>'+
-             '<button type="button" class="dash-rev-cell" onclick="pndOpenReview(\''+p.id+'\',\'annual\')"><span class="dash-rev-lbl">Annual</span><span class="chip '+a.cls+'">'+esc(a.lbl)+'</span></button>'+
-           '</div>';
-    });
-    h += '</div>';
-  }
-  h += '</div></div>';
-
-  /* Section: Company-wide totals - admin only */
-  if(isAdmin){
-    var totals = _pndAdminTotals(visiblePeople, thisMonday);
-    h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">Company-wide roll-up</h2><span class="dash-m">Active state across every person</span></div><div class="dash-card-bd"><div class="dash-tot-grid">'+
-           '<div class="dash-tot"><div class="dash-tot-n">'+totals.huddlesDue+'</div><div class="dash-tot-l">Huddles due this week</div></div>'+
-           '<div class="dash-tot"><div class="dash-tot-n">'+totals.pendingQtr+'</div><div class="dash-tot-l">Pending quarterlies</div></div>'+
-           '<div class="dash-tot"><div class="dash-tot-n">'+totals.pendingAnn+'</div><div class="dash-tot-l">Pending annuals</div></div>'+
-           '<div class="dash-tot"><div class="dash-tot-n">'+totals.below80+'</div><div class="dash-tot-l">People below 80% (4-wk avg)</div></div>'+
-         '</div></div></div>';
-  }
-  return h;
-}
-
-/* Review status for a person's quarterly or annual: complete (archived),
-   in progress (signatures started), or not started - now schedule-aware.
-   If a review date is set and has passed without completion, the chip goes
-   red Overdue with the missed date. Returns { cls, lbl }. */
-function _pndReviewStatus(person, kind){
-  var now = new Date();
-  var todayIso = isoDate(now);
-  function withSchedule(base, period){
-    var rd = getReviewDate(person.id, kind, period);
-    if(!rd || !rd.date) return base;
-    if(base.cls === 'c-grn') return base;                       /* complete - schedule no longer matters */
-    if(rd.date < todayIso){
-      return { cls:'c-red', lbl:'Overdue - was '+_pndFormatDateShort(rd.date) };
-    }
-    return { cls: base.cls, lbl: base.lbl+' - '+_pndFormatDateShort(rd.date) };
-  }
-  if(kind === 'quarterly'){
-    var y = currentYearOf(now), q = currentQuarterOf(now);
-    var m = _pndLoadQuarterly();
-    var rec = m[qKey(person.id, y, q)];
-    var base;
-    if(rec && rec.archivedAt) base = { cls:'c-grn', lbl:q+' '+y+' complete' };
-    else if(rec && (rec.approvals && Object.keys(rec.approvals).some(function(k){return rec.approvals[k].signedAt;}))) base = { cls:'c-amb', lbl:q+' '+y+' in progress' };
-    else base = { cls:'c-gry', lbl:q+' '+y+' not started' };
-    return withSchedule(base, y+'-'+q);
-  } else {
-    var yr = currentYearOf(now);
-    var am = _pndLoadAnnual();
-    var arec = am[aKey(person.id, yr)];
-    var abase;
-    if(arec && arec.archivedAt) abase = { cls:'c-grn', lbl:yr+' complete' };
-    else if(arec && (arec.approvals && Object.keys(arec.approvals).some(function(k){return arec.approvals[k].signedAt;}))) abase = { cls:'c-amb', lbl:yr+' in progress' };
-    else abase = { cls:'c-gry', lbl:yr+' not started' };
-    return withSchedule(abase, String(yr));
-  }
-}
-/* Open a person's quarterly or annual review from the dashboard. */
-function pndOpenReview(personId, kind){
-  state.reportId = personId;
-  if(kind === 'quarterly'){
-    state.quarterlyYear = currentYearOf(new Date());
-    state.quarterlyQ = currentQuarterOf(new Date());
-    navTo('quarterly');
-  } else {
-    state.annualYear = currentYearOf(new Date());
-    navTo('annual');
-  }
-}
-
-/* Employee dashboard: personal roll-up. */
-function _pndDashboardEmployee(cu, thisMonday){
-  var h = '';
-  if(!cu){ return '<div class="empty" style="padding:20px">No user context.</div>'; }
-  /* My scorecard status - cadence-aware */
-  var meIsDue = isHuddleWeek(cu, thisMonday);
-  var st = _pndHuddleStatusThisWeek(cu.id, thisMonday);
-  var pillCls, pillLbl;
-  if(st==='no-std'){ pillCls='c-gry'; pillLbl='No scorecard defined'; }
-  else if(!meIsDue){ pillCls='c-gry'; pillLbl='Not due this week'; }
-  else {
-    pillCls = st==='complete'?'c-grn':st==='in-progress'?'c-amb':st==='away'?'c-blu':'c-gry';
-    pillLbl = st==='complete'?'Complete':st==='in-progress'?'In progress':st==='away'?'Away':'Not started';
-  }
-  var meCad = cadenceForPerson(cu).cadence;
-  var meCadTag = meCad!=='weekly' ? '<span class="dash-person-cad">'+cadenceLabel(meCad)+'</span>' : '';
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">My week</h2></div><div class="dash-card-bd">'+
-       '<div class="dash-person-btn dash-me'+(!meIsDue?' dash-person-offweek':'')+'" onclick="pndOpenPersonHuddle(\''+cu.id+'\',\''+thisMonday+'\')">'+
-         '<div class="dash-person-body"><div class="dash-person-name">Weekly Huddle for the week of '+_pndFormatDateShort(thisMonday)+meCadTag+'</div><div class="dash-person-role">Click to open your huddle</div></div>'+
-         '<span class="chip '+pillCls+'">'+esc(pillLbl)+'</span>'+
-       '</div></div></div>';
-  /* My last 4 weeks of scores - same KPI-card treatment as the supervisor grid */
-  var scores = _pndLastNScores(cu.id, thisMonday, 4);
-  var last = scores.filter(function(s){return s.pct!=null;});
-  var latest = last.length ? last[last.length-1].pct : null;
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">My Weekly Scorecard - 4-week trend</h2></div><div class="dash-card-bd">';
-  if(latest==null){
-    h += '<button type="button" class="dash-kpi dash-kpi-empty" style="max-width:340px" onclick="pndOpenPersonHuddle(\''+cu.id+'\',\''+thisMonday+'\')">'+
-           '<div class="dash-kpi-top"><span class="dash-kpi-name">No score yet</span><span class="chip c-gry">No data</span></div>'+
-           '<div class="dash-kpi-cta">No scorecard entries yet &rarr;</div>'+
-         '</button>';
-  } else {
-    var prevE = last.length>1 ? last[last.length-2].pct : null;
-    var deltaE = prevE==null ? null : latest - prevE;
-    var latestWkE = last[last.length-1];
-    var toneE = latest>=90?'grn':latest>=80?'amb':'red';
-    var chipClsE = latest>=90?'c-grn':latest>=80?'c-amb':'c-red';
-    var chipLblE = latest>=90?'On Track':latest>=80?'Watch':'Off Track';
-    var deltaHtmlE = '';
-    if(latestWkE && latestWkE.hardFail){
-      deltaHtmlE = '<span class="dash-kpi-delta down">&#9888; Priority Rule not met</span>';
-    } else if(deltaE!=null && deltaE!==0){
-      var upE = deltaE>0;
-      deltaHtmlE = '<span class="dash-kpi-delta '+(upE?'up':'down')+'">'+(upE?'&#9650;':'&#9660;')+' '+Math.abs(deltaE)+'% vs last week</span>';
-    } else if(deltaE===0){
-      deltaHtmlE = '<span class="dash-kpi-delta flat">&#8212; level vs last week</span>';
-    }
-    h += '<button type="button" class="dash-kpi t-'+toneE+'" style="max-width:340px" onclick="pndOpenPersonHuddle(\''+cu.id+'\',\''+thisMonday+'\')">'+
-           '<div class="dash-kpi-top"><span class="dash-kpi-name">Latest score</span><span class="chip '+chipClsE+'">'+chipLblE+'</span></div>'+
-           '<div class="dash-kpi-mid"><span class="dash-kpi-val">'+latest+'%</span><span class="dash-kpi-spark">'+_pndRenderSparkline(scores)+'</span></div>'+
-           (deltaHtmlE ? '<div class="dash-kpi-bot">'+deltaHtmlE+'</div>' : '')+
-         '</button>';
-  }
-  h += '</div></div>';
-  /* My upcoming reviews - quarterly + annual for the current periods */
-  var mq = _pndReviewStatus(cu, 'quarterly');
-  var ma = _pndReviewStatus(cu, 'annual');
-  var mqDate = getReviewDate(cu.id, 'quarterly', currentYearOf(new Date())+'-'+currentQuarterOf(new Date()));
-  var maDate = getReviewDate(cu.id, 'annual', String(currentYearOf(new Date())));
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">My upcoming reviews</h2></div><div class="dash-card-bd"><div class="dash-rev-list">'+
-         '<div class="dash-rev-row"><span class="dash-rev-name">Quarterly'+(mqDate?' &middot; '+esc(_pndFormatDateShort(mqDate.date)):'')+'</span>'+
-           '<button type="button" class="dash-rev-cell" onclick="pndOpenReview(\''+cu.id+'\',\'quarterly\')"><span class="chip '+mq.cls+'">'+esc(mq.lbl)+'</span></button></div>'+
-         '<div class="dash-rev-row"><span class="dash-rev-name">Annual'+(maDate?' &middot; '+esc(_pndFormatDateShort(maDate.date)):'')+'</span>'+
-           '<button type="button" class="dash-rev-cell" onclick="pndOpenReview(\''+cu.id+'\',\'annual\')"><span class="chip '+ma.cls+'">'+esc(ma.lbl)+'</span></button></div>'+
-       '</div></div></div>';
-  /* Awaiting my sign-off */
-  var myAlerts = ((window.SMB_ALERT_MAP && window.SMB_ALERT_MAP.pnd)||[]).filter(function(a){
-    return a.targetPersonId === cu.id;
-  });
-  h += '<div class="dash-card"><div class="dash-card-hd"><h2 class="dash-t">Awaiting your sign-off <span class="dash-count">'+myAlerts.length+'</span></h2></div><div class="dash-card-bd">';
-  if(!myAlerts.length){ h += '<div class="empty" style="padding:20px">Nothing waiting on you.</div>'; }
-  else {
-    h += '<ul class="dash-alerts">';
-    myAlerts.forEach(function(a){
-      var subj = personById(a.subjectPersonId);
-      h += '<li class="dash-alert-row" onclick="'+esc(a.href||'')+'">'+
-             '<span class="dash-alert-name">'+esc(subj?fullName(subj):a.subjectPersonId)+'</span>'+
-             '<span class="dash-alert-body">'+esc(a.body||'')+'</span>'+
-             '<span class="dash-alert-cta">Open &rarr;</span>'+
-           '</li>';
-    });
-    h += '</ul>';
-  }
-  h += '</div></div>';
-  return h;
-}
-
-function _pndRenderSparkline(scores){
-  /* Small SVG line chart showing the 4-week score trace inside a KPI card. */
-  var w = 110, hh = 34, n = scores.length, pad = 3;
-  if(!n) return '<svg width="'+w+'" height="'+hh+'"></svg>';
-  var stepX = n>1 ? (w-pad*2)/(n-1) : 0;
-  var pts = scores.map(function(s, i){
-    var y = s.pct==null ? hh/2 : (hh - pad) - ((s.pct/100)*(hh - pad*2));
-    return (pad + i*stepX)+','+y;
-  });
-  var path = 'M '+pts.join(' L ');
-  var lastPct = scores[n-1] ? scores[n-1].pct : null;
-  var color = lastPct==null?'var(--txm)':lastPct>=90?'var(--grn)':lastPct>=80?'var(--amb)':'var(--red)';
-  /* End-point dot marks the latest week */
-  var lastPt = pts[pts.length-1].split(',');
-  return '<svg width="'+w+'" height="'+hh+'" viewBox="0 0 '+w+' '+hh+'" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">'+
-           '<path d="'+path+'" stroke="'+color+'" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'+
-           '<circle cx="'+lastPt[0]+'" cy="'+lastPt[1]+'" r="3" fill="'+color+'"/>'+
-         '</svg>';
-}
-
-function _pndAdminTotals(visiblePeople, thisMonday){
-  var huddlesDue = 0, pendingQtr = 0, pendingAnn = 0, below80 = 0;
-  visiblePeople.forEach(function(p){
-    var std = standardFor(p);
-    if(std){
-      var st = _pndHuddleStatusThisWeek(p.id, thisMonday);
-      if(isHuddleWeek(p, thisMonday) && (st === 'not-started' || st === 'in-progress')) huddlesDue++;
-      var scores = _pndLastNScores(p.id, thisMonday, 4).filter(function(s){return s.pct!=null;});
-      if(scores.length){
-        var avg = scores.reduce(function(sum,s){return sum+s.pct;},0)/scores.length;
-        if(avg < 80) below80++;
-      }
-    }
-  });
-  /* Count pending quarterlies and annuals across all people */
-  var qm = _pndLoadQuarterly();
-  Object.keys(qm).forEach(function(k){ if(qm[k] && !qm[k].archivedAt) pendingQtr++; });
-  var am = _pndLoadAnnual();
-  Object.keys(am).forEach(function(k){ if(am[k] && !am[k].archivedAt) pendingAnn++; });
-  return { huddlesDue:huddlesDue, pendingQtr:pendingQtr, pendingAnn:pendingAnn, below80:below80 };
-}
-
-/* Open a person's weekly huddle for a specific week. Used by dashboard clicks. */
-function pndOpenPersonHuddle(personId, weekIso){
-  state.reportId = personId;
-  if(weekIso) state.weekIso = weekIso;
-  navTo('huddle');
-}
-
-function _personBg(p){
-  /* Simple color-slot lookup - matches the person avatar palette elsewhere. */
-  var slots = ['#6b8e5a','#5b8fd6','#c0663f','#8a6fb8','#3f9d8a','#9c5f4e','#4a6b6d','#a68140','#6b6b8e','#7c8c56','#b39268','#4c6b5f'];
-  return slots[(p.colorSlot||0) % slots.length];
+  return '<div class="page-h"><div><h1 class="pg-title">Dashboard</h1><div class="pg-sub">Supervisor command center.</div></div></div>'+
+    '<div class="soon"><div class="s-t">Coming next</div>'+
+    '<p>The supervisor dashboard rolls up everything from the weekly huddles once more pages are built:</p>'+
+    '<ul><li>This week\'s huddles due, by direct report</li><li>Weekly scores trending down</li><li>Open hard fails and improvement plans</li><li>Development actions due</li><li>Upcoming quarterly and annual reviews</li></ul>'+
+    '<p style="margin-top:14px"><button class="btn btn-blu" onclick="navTo(\'huddle\')">Go to Weekly Performance Huddle</button></p></div>';
 }
 
 function reportOptions(){
@@ -2166,45 +1376,10 @@ function renderHuddle(){
   var _pdReps = pdVisiblePeople();
   var _pdPickerLabel = _pdMode==='admin' ? 'Person' : 'Direct report';
   var _pdShowPicker = _pdReps.length > 1;
-  var _pdCadInfo = cadenceForPerson(person);
-  var _pdCad = _pdCadInfo.cadence;
-  var _pdCadFromVsp = _pdCadInfo.source === 'VSP';
-  var _pdIsHuddleWk = isHuddleWeek(person, state.weekIso);
-  var _pdCadSelect = '';
-  if(_pdMode==='admin'){
-    if(_pdCadFromVsp){
-      /* Cadence is owned by the person's 1:1 meeting in VSP. Show it read-only
-         with the source badge; edits route to VSP (VSP-Mirror discipline). */
-      _pdCadSelect = '<div class="field"><label for="pd-cadence">Meeting cadence <span class="q-src q-src-vsp" style="margin-left:6px">VSP</span></label>'+
-        '<div class="pd-cad-locked" title="Cadence comes from this person\'s 1:1 meeting in VSP. Change it there.">'+cadenceLabel(_pdCad)+' &middot; synced from VSP</div></div>';
-    } else {
-      _pdCadSelect = '<div class="field"><label for="pd-cadence">Meeting cadence &middot; '+esc(person.roleLabel||'')+'</label>'+
-        '<select id="pd-cadence" class="sel" onchange="setHuddleCadence(\''+escAttr(person.roleLabel||'')+'\',this.value)">'+
-          ['weekly','biweekly','monthly'].map(function(c){ return '<option value="'+c+'"'+(c===_pdCad?' selected':'')+'>'+cadenceLabel(c)+'</option>'; }).join('')+
-        '</select></div>';
-    }
-  }
-  /* Meeting-context line: the huddle is one agenda item inside the person's 1:1
-     (VSP owns the meeting + agenda). Rendered when the VSP contract is live. */
-  var _pdMeetingNote = '';
-  if(_pdCadFromVsp && _pdCadInfo.meeting){
-    var _mtName = _pdCadInfo.meeting.name || '1:1 meeting';
-    var _mtSup = _pdCadInfo.meeting.supervisorId ? personById(_pdCadInfo.meeting.supervisorId) : null;
-    _pdMeetingNote = '<div class="pd-meeting-note"><span class="q-src q-src-vsp">VSP</span> This huddle is part of '+esc(_mtName)+(_mtSup?' with '+esc(fullName(_mtSup)):'')+'. The meeting agenda lives in VSP; the scorecard below is the performance segment of that agenda.</div>';
-  }
   h += '<div class="sec-block"><div class="sec-bd"><div class="row" style="gap:20px">'+
         (_pdShowPicker ? '<div class="field"><label for="pd-report">'+esc(_pdPickerLabel)+'</label><select id="pd-report" class="sel" onchange="selectReport(this.value)">'+opts+'</select></div>' : '')+
         '<div class="field"><label>Week</label><div class="wk"><button class="btn btn-sm" onclick="changeWeek(-1)" aria-label="Previous week">&lt;</button><span class="wklabel">'+esc(state.weekIso)+' to '+esc(addDays(state.weekIso,6))+'</span><button class="btn btn-sm" onclick="changeWeek(1)" aria-label="Next week">&gt;</button></div></div>'+
-        _pdCadSelect+
-        '<div class="field"><label>Meeting</label><label class="pd-discussed'+(rec.discussed?' is-done':'')+'"><input type="checkbox" '+(rec.discussed?'checked':'')+' onchange="toggleDiscussed(this.checked)"><span>'+(rec.discussed?'&#10003; Discussed with supervisor':'Mark discussed')+'</span></label></div>'+
-       '</div>'+
-       _pdMeetingNote+
-       (_pdCad!=='weekly' ? '<div class="pd-cad-note '+(_pdIsHuddleWk?'is-huddle':'off-week')+'">'+
-          (_pdIsHuddleWk
-            ? '&#9679; Huddle week &middot; '+cadenceLabel(_pdCad)+' cadence. Review every week since the last huddle in this meeting.'
-            : '&#9675; Off-week &middot; '+cadenceLabel(_pdCad)+' cadence. Fill the scorecard as usual; the next huddle meeting is '+esc(nextHuddleDate(person, state.weekIso))+'.')+
-        '</div>' : '')+
-       '</div></div>';
+       '</div></div></div>';
 
   // Away banner removed; per-week Away is now visible in the Weekly Score row itself.
 
@@ -2312,10 +1487,26 @@ function _pndReadCoreValues(){
   if(Array.isArray(v) && v.length) return { values: v, source: 'VSP' };
   return { values: window.SMB_TENANT_CORE_VALUES, source: 'seed' };
 }
+// v108 same-origin bridge (staging convenience per D-111; retires with the
+// master shell). Reads the shared SMB_BRIDGE_VSP_v1 snapshot VSP writes on
+// every save when VSP is not loaded in the same page context.
+function _pndBridge(){
+  try{ var raw = localStorage.getItem('SMB_BRIDGE_VSP_v1'); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+function _pndBridgePerson(personId){
+  var b = _pndBridge(); if(!b || !b.byPerson) return null;
+  return b.byPerson[personId] || null;
+}
 function _pndReadVspGoals(personId, year, q){
   var api = window.SMB_VSP_GOALS;
   if(api && typeof api.forPerson === 'function'){
     try{ var g = api.forPerson(personId, year, q); if(Array.isArray(g)) return { goals: g, source: 'VSP' }; }catch(e){}
+  }
+  var b = _pndBridgePerson(personId);
+  if(b && b.goals){
+    var qkey = (typeof q === 'string') ? q : ('Q' + (q+1));
+    var arr = b.goals[qkey];
+    if(Array.isArray(arr)) return { goals: arr, source: 'VSP-bridge' };
   }
   return { goals: null, source: 'none' };
 }
@@ -2328,23 +1519,13 @@ function _pndReadVspMeasurables(personId, year, q){
   if(api && typeof api.forPerson === 'function'){
     try{ var m = api.forPerson(personId, year, q); if(Array.isArray(m)) return { measurables: m, source: 'VSP' }; }catch(e){}
   }
-  return { measurables: null, source: 'none' };
-}
-/* VSP meeting contract for this person's 1:1 (D-98 direction). VSP owns meetings
-   and agendas; the P&D huddle is one agenda item inside that 1:1, not a competing
-   meeting. Expected shape: { meetingId, name, cadence: 'weekly'|'biweekly'|'monthly',
-   nextDate: 'YYYY-MM-DD', supervisorId } or null. Silent-fail-safe: when VSP is not
-   mounted or has no meeting for the person, P&D falls back to its local ROLE_CADENCE.
-   The VSP-side publisher is a VSP-thread task; until it ships, this returns 'none'. */
-function _pndReadVspMeeting(personId){
-  var api = window.SMB_VSP_MEETINGS;
-  if(api && typeof api.forPerson === 'function'){
-    try{
-      var mt = api.forPerson(personId);
-      if(mt && mt.cadence) return { meeting: mt, source: 'VSP' };
-    }catch(e){}
+  var b = _pndBridgePerson(personId);
+  if(b && b.measurables){
+    var qkey = (typeof q === 'string') ? q : ('Q' + (q+1));
+    var arr = b.measurables[qkey];
+    if(Array.isArray(arr)) return { measurables: arr, source: 'VSP-bridge' };
   }
-  return { meeting: null, source: 'none' };
+  return { measurables: null, source: 'none' };
 }
 /* All Mondays that fall within the calendar quarter (Q1=Jan-Mar, Q2=Apr-Jun,
    Q3=Jul-Sep, Q4=Oct-Dec). Used by the Quarterly page to embed a scorecard
@@ -2377,167 +1558,6 @@ function _pndLoadQuarterly(){ try{ var v=localStorage.getItem('smb_perf_quarterl
 function _pndSaveQuarterly(m){ try{ localStorage.setItem('smb_perf_quarterly_v1', JSON.stringify(m)); }catch(e){} }
 function qKey(personId, year, q){ return personId+'__'+year+'__'+q; }
 
-/* ============================================================
-   REVIEW SCHEDULING - assign a date to a quarterly/annual review.
-   Front-end only: stores a date locally and offers an .ics "Add to Outlook"
-   download. The live one-click Outlook/Google invite arrives with the Email +
-   Calendar Integration Backend (Integration Placeholder Pattern v1, per CRM/HR).
-   Key: personId__kind__period  e.g.  p8__quarterly__2026-Q3 , p8__annual__2026
-   ============================================================ */
-function _pndLoadReviewDates(){ try{ var v=localStorage.getItem('smb_pnd_review_dates_v1'); return v?JSON.parse(v):{}; }catch(e){ return {}; } }
-function _pndSaveReviewDates(m){ try{ localStorage.setItem('smb_pnd_review_dates_v1', JSON.stringify(m)); }catch(e){} }
-function _reviewDateKey(personId, kind, period){ return personId+'__'+kind+'__'+period; }
-function getReviewDate(personId, kind, period){
-  var m = _pndLoadReviewDates();
-  return m[_reviewDateKey(personId, kind, period)] || null;   /* {date, time, setAt} or null */
-}
-function setReviewDate(personId, kind, period, date, time){
-  var m = _pndLoadReviewDates();
-  var key = _reviewDateKey(personId, kind, period);
-  if(!date){ delete m[key]; }
-  else { m[key] = { date:date, time:time||'09:00', setAt:new Date().toISOString() }; }
-  _pndSaveReviewDates(m);
-}
-function pndSetReviewDate(personId, kind, period, date){
-  var existing = getReviewDate(personId, kind, period);
-  setReviewDate(personId, kind, period, date, existing?existing.time:'09:00');
-  renderPage();
-}
-function pndSetReviewTime(personId, kind, period, time){
-  var existing = getReviewDate(personId, kind, period);
-  if(!existing || !existing.date) return;                     /* need a date first */
-  setReviewDate(personId, kind, period, existing.date, time);
-  renderPage();
-}
-function pndOutlookPlaceholder(){
-  toast('One-click Outlook invites arrive with the Calendar Integration Backend. For now, use Download .ics.');
-}
-/* Open the user's mail client (Outlook) with a pre-drafted email. Same
-   no-backend mechanism BD/CRM use: mailto with recipient, subject, and body
-   prefilled; the user reviews and hits Send. Real server-side send arrives
-   with the Postmark backend through the existing SMB_MAIL seam. */
-function _pndMailto(to, cc, subject, body){
-  var href = 'mailto:'+encodeURIComponent(to||'')+
-             '?subject='+encodeURIComponent(subject||'')+
-             (cc?'&cc='+encodeURIComponent(cc):'')+
-             '&body='+encodeURIComponent(body||'');
-  var a = document.createElement('a');
-  a.href = href; a.style.display='none';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
-/* Email invite for a scheduled review: To the person, CC their supervisor. */
-function pndEmailReviewInvite(personId, kind, period){
-  var person = personById(personId);
-  var rd = getReviewDate(personId, kind, period);
-  if(!person || !rd){ toast('Set a review date first'); return; }
-  var sup = person.reportsTo ? personById(person.reportsTo) : null;
-  var kindLbl = kind==='quarterly' ? 'Quarterly Performance Huddle' : 'Annual Performance Development Plan';
-  var subject = kindLbl+' - '+fullName(person)+' - '+_pndFormatDateShort(rd.date)+' at '+(rd.time||'09:00');
-  var body = 'Hi '+person.first+',\n\n'+
-             'Your '+kindLbl.toLowerCase()+' ('+period+') is scheduled for '+_pndFormatDateShort(rd.date)+' at '+(rd.time||'09:00')+'.\n\n'+
-             'Before the meeting, please complete your self-ratings in the P&D module.\n\n'+
-             '(Calendar file: use the Download .ics button in P&D and open it to add this to your Outlook calendar.)\n\n'+
-             'Thanks,\n'+(currentUser()?currentUser().first:'');
-  _pndMailto(person.email||'', (sup&&sup.email)||'', subject, body);
-  toast(person.email ? 'Outlook draft opened' : 'Outlook opened - add the recipient (no email on file)');
-}
-/* Email a sign-off reminder to the next unsigned step in the approval chain. */
-function pndEmailSignReminder(subjectPersonId, kind){
-  var chain = _pndBuildApprovalChain(subjectPersonId);
-  var rec = (kind==='annual') ? getAnnual() : getQuarterly();
-  var next = null;
-  for(var i=0;i<chain.length;i++){
-    var ap = (rec.approvals||{})[chain[i].key];
-    if(!ap || !ap.signedAt){ next = chain[i]; break; }
-  }
-  if(!next){ toast('Nothing awaiting - all signatures are in'); return; }
-  var subj = personById(subjectPersonId);
-  var period = (kind==='annual') ? String(state.annualYear) : (state.quarterlyQ+' '+state.quarterlyYear);
-  var kindLbl = (kind==='annual') ? 'Annual Performance Development Plan' : 'Quarterly Performance Huddle';
-  var subject = fullName(subj)+"'s "+period+' '+kindLbl+' - awaiting your sign-off';
-  var body = 'Hi '+next.person.first+',\n\n'+
-             fullName(subj)+"'s "+period+' '+kindLbl.toLowerCase()+' is complete and waiting on your signature ('+next.label+').\n\n'+
-             'Open the P&D module to review and sign.\n\n'+
-             'Thanks,\n'+(currentUser()?currentUser().first:'');
-  _pndMailto(next.person.email||'', '', subject, body);
-  toast(next.person.email ? 'Reminder draft opened for '+fullName(next.person) : 'Outlook opened - add the recipient (no email on file for '+fullName(next.person)+')');
-}
-function qToggleMoreMenu(e){
-  if(e && e.stopPropagation) e.stopPropagation();
-  state.qMoreOpen = !state.qMoreOpen;
-  renderPage();
-  /* Close on any outside click - one-shot listener */
-  if(state.qMoreOpen){
-    setTimeout(function(){
-      var closer = function(){ state.qMoreOpen=false; document.removeEventListener('click', closer); renderPage(); };
-      document.addEventListener('click', closer);
-    }, 0);
-  }
-}
-/* Build a downloadable .ics calendar file for a review. Universal format that
-   Outlook, Google Calendar, and Apple Calendar all import. No backend needed. */
-function _buildReviewIcs(person, kind, period, date, time){
-  var t = (time||'09:00').replace(':','')+'00';
-  var d = date.replace(/-/g,'');
-  var dtStart = d+'T'+t;
-  /* 1-hour default duration */
-  var endH = String(Math.min(23, parseInt((time||'09:00').split(':')[0],10)+1)).padStart(2,'0');
-  var dtEnd = d+'T'+endH+(time||'09:00').split(':')[1]+'00';
-  var kindLbl = kind==='quarterly'?'Quarterly Performance Huddle':'Annual Performance Development Plan';
-  var uid = 'pnd-'+person.id+'-'+kind+'-'+period+'@selfmanagingbuilder.com';
-  var stamp = new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-  var lines = [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Self-Managing Builder//P&D//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
-    'BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+stamp,'DTSTART:'+dtStart,'DTEND:'+dtEnd,
-    'SUMMARY:'+kindLbl+' - '+fullName(person),
-    'DESCRIPTION:'+kindLbl+' review for '+fullName(person)+' ('+period+'). Scheduled in Self-Managing Builder.',
-    'STATUS:CONFIRMED','END:VEVENT','END:VCALENDAR'
-  ];
-  return lines.join('\r\n');
-}
-function pndDownloadReviewIcs(personId, kind, period){
-  var person = personById(personId);
-  var rd = getReviewDate(personId, kind, period);
-  if(!person || !rd){ toast('Set a review date first'); return; }
-  var ics = _buildReviewIcs(person, kind, period, rd.date, rd.time);
-  try{
-    var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = kind+'-review-'+person.initials+'-'+period+'.ics';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-    toast('Calendar file downloaded. Open it to add to Outlook.');
-  }catch(e){ toast('Could not generate the calendar file'); }
-}
-
-/* Review scheduling card. period is 'YYYY-Qn' for quarterly or 'YYYY' for annual.
-   Set a date, download an .ics, and see the Outlook placeholder (Integration
-   Placeholder Pattern v1 - upgrades to a live invite when the Calendar backend lands). */
-function _pndRenderReviewSchedule(person, kind, period, archived){
-  var rd = getReviewDate(person.id, kind, period);
-  var kindLbl = kind==='quarterly' ? 'this quarterly review' : 'this annual review';
-  var h = '<div class="q-card q-schedule"><div class="q-card-hd"><div class="q-t">Schedule '+kindLbl+'</div><div class="q-m">Set a date, add it to Outlook, and it shows on the dashboard.</div></div><div class="q-card-bd">';
-  h += '<div class="q-sched-row">';
-  h += '<div class="field"><label>Date</label><input type="date" class="sel" value="'+esc(rd?rd.date:'')+'" '+(archived?'disabled':'')+' onchange="pndSetReviewDate(\''+person.id+'\',\''+kind+'\',\''+period+'\',this.value)"></div>';
-  h += '<div class="field"><label>Time</label><input type="time" class="sel" value="'+esc(rd&&rd.time?rd.time:'09:00')+'" '+(archived?'disabled':'')+' onchange="pndSetReviewTime(\''+person.id+'\',\''+kind+'\',\''+period+'\',this.value)"></div>';
-  if(rd){
-    h += '<div class="q-sched-actions">';
-    h += '<button type="button" class="q-mbtn" onclick="pndDownloadReviewIcs(\''+person.id+'\',\''+kind+'\',\''+period+'\')">Download .ics</button>';
-    h += '<button type="button" class="q-mbtn" onclick="pndEmailReviewInvite(\''+person.id+'\',\''+kind+'\',\''+period+'\')" title="Opens Outlook with the invite email drafted - review and send">Email invite</button>';
-    /* Outlook connection placeholder - Integration Placeholder Pattern v1 */
-    h += '<button type="button" class="q-mbtn q-mbtn-pending" title="One-click Outlook invites arrive with the Calendar Integration Backend. For now, use Download .ics." onclick="pndOutlookPlaceholder()">Add to Outlook <span class="q-int-badge">Soon</span></button>';
-    h += '</div>';
-  }
-  h += '</div>';
-  if(rd){
-    h += '<div class="q-sched-set">Scheduled for '+esc(_pndFormatDateShort(rd.date))+' at '+esc(rd.time||'09:00')+'.</div>';
-  }
-  h += '</div></div>';
-  return h;
-}
-
 function blankQuarterly(){
   return {
     goals: [],
@@ -2552,7 +1572,6 @@ function blankQuarterly(){
     weeklyOnTrack: null, weeklyNote: '',
     /* NEW 5-5-5 fields (v2 layout) */
     checkIn: { personal:'', professional:'' },
-    workingNotWorking: { working:'', notWorking:'' },
     managerFeedback: {
       expectations:  { rating:null, example:'' },
       communicating: { rating:null, example:'' },
@@ -2743,46 +1762,6 @@ function _pndArchivedForPerson(personId){
   });
   out.sort(function(a,b){ return b.archivedAt.localeCompare(a.archivedAt); });
   return out;
-}
-
-/* Enumerate archived annual reviews for a person (mirror of the quarterly enumerator).
-   Used by the annual page's jump list so users can move between historical years. */
-function _pndArchivedAnnualsForPerson(personId){
-  var m = _pndLoadAnnual();
-  var out = [];
-  Object.keys(m).forEach(function(k){
-    var p = k.split('__');
-    if(p[0]!==personId) return;
-    if(!m[k].archivedAt) return;
-    out.push({ year: parseInt(p[1]), archivedAt: m[k].archivedAt });
-  });
-  out.sort(function(a,b){ return b.year - a.year; });
-  return out;
-}
-
-/* Signature progress bar - one line, five slots, chip per slot, colored by state.
-   Prominent at the top of Quarterly and Annual pages so users see completion state
-   at a glance without scrolling to the Approvals card. Clicking a slot scrolls to
-   the Approvals card for the full detail. */
-function _pndRenderSigProgress(rec, chain){
-  if(!chain || !chain.length) return '';
-  var signed = 0;
-  var dots = chain.map(function(step){
-    var appr = rec.approvals && rec.approvals[step.key];
-    var isSigned = !!(appr && appr.signedAt);
-    if(isSigned) signed++;
-    var cls = isSigned ? 'signed' : 'pending';
-    var initials = step.person ? (step.person.initials||'') : '';
-    var title = esc((step.person?fullName(step.person):step.label||step.key)+' - '+(isSigned?'signed':'pending'));
-    return '<span class="q-sig-dot '+cls+'" title="'+title+'">'+esc(initials)+'</span>';
-  }).join('');
-  var pct = Math.round(signed/chain.length*100);
-  var lbl = signed+' of '+chain.length+' signed';
-  return '<div class="q-sig-progress" onclick="var t=document.querySelector(\'.q-appr\');if(t)t.scrollIntoView({behavior:\'smooth\',block:\'start\'})">'+
-           '<div class="q-sig-bar-wrap"><div class="q-sig-bar-fill" style="width:'+pct+'%"></div></div>'+
-           '<div class="q-sig-dots">'+dots+'</div>'+
-           '<div class="q-sig-lbl">'+esc(lbl)+'</div>'+
-         '</div>';
 }
 
 /* Roll up the weekly huddles inside a given quarter for a given person.
@@ -3025,13 +2004,11 @@ function renderQuarterly(){
   h += '<h1 class="pg-title">Quarterly Performance Huddle</h1>'+
        '<div class="pg-sub">'+esc(fullName(person))+' &middot; '+esc(person.roleLabel||'')+' &middot; '+esc(state.quarterlyQ)+' '+state.quarterlyYear+(sup?' &middot; Supervisor: '+esc(fullName(sup)):'')+'</div>';
 
-  // Archived banner - includes continuity button to start next quarter's huddle.
+  // Archived banner
   if(archived){
-    var _nextQ = _pndNextQuarter(state.quarterlyYear, state.quarterlyQ);
     h += '<div class="q-archived-banner">'+
            '<div class="q-archived-hd"><span class="q-archived-badge">'+_check()+' Archived</span>'+
              '<span>Signed off by every role on '+esc(rec.archivedAt.substring(0,10))+'. Read-only.</span></div>'+
-           '<div class="q-archived-cta"><button type="button" class="q-arch-next-btn" onclick="qStartNextFromArchived()">Start '+esc(_nextQ.q)+' '+_nextQ.year+' Huddle &rarr;</button></div>'+
          '</div>';
   }
 
@@ -3052,17 +2029,13 @@ function renderQuarterly(){
     });
     h += '</select></label>';
   }
-  /* Secondary actions collapse behind a More menu so the strip stays clean. */
-  h += '<div class="q-more-wrap"><button type="button" class="q-mbtn q-more-btn" onclick="event.stopPropagation();qToggleMoreMenu(event)" title="More actions" aria-label="More actions">&#8942; More</button>';
-  h += '<div class="q-more-menu'+(state.qMoreOpen?' open':'')+'">';
-  h += '<button type="button" class="q-more-item" onclick="state.qMoreOpen=false;qPrintHuddle()">Print or export PDF</button>';
+  h += '<button class="q-mbtn" onclick="qPrintHuddle()" title="Print or export to PDF">Print</button>';
   if(!archived){
-    h += '<label class="q-more-item q-more-file"><input type="file" accept="application/pdf,image/*" onchange="state.qMoreOpen=false;qUploadPaper(this)" style="display:none">Upload paper</label>';
+    h += '<label class="q-mbtn q-mbtn-file"><input type="file" accept="application/pdf,image/*" onchange="qUploadPaper(this)" style="display:none">Upload paper</label>';
   }
   if(rec.paperAttachment){
-    h += '<button type="button" class="q-more-item" onclick="state.qMoreOpen=false;qExtractFromPaper()" title="Runs through the AI Proxy Backend when it lands">Extract from paper</button>';
+    h += '<button class="q-mbtn q-mbtn-pending" onclick="qExtractFromPaper()" title="Runs through the AI Proxy Backend when it lands">Extract from paper</button>';
   }
-  h += '</div></div>';
   h += '<span class="autosave">'+(archived?'':'Saves automatically')+'</span>';
   h += '</div>';
   h += '</div>';
@@ -3074,12 +2047,6 @@ function renderQuarterly(){
       h += '<div class="q-youare">You are signed in as <b>'+esc(fullName(cuNow))+'</b> &middot; '+esc(cuNow.roleLabel||'')+'</div>';
     }
   }
-
-  // Signature progress bar - 1-second read on how close to complete
-  h += _pndRenderSigProgress(rec, _pndBuildApprovalChain(state.reportId));
-
-  // Review scheduling (front-end date + .ics; Outlook placeholder per Integration Placeholder Pattern v1)
-  h += _pndRenderReviewSchedule(person, 'quarterly', state.quarterlyYear+'-'+state.quarterlyQ, archived);
 
   /* Awaiting-your-sign-off preview. Reads window.SMB_ALERT_MAP.pnd (which
      master shell surfaces on Home). Shown when the current user has open
@@ -3132,22 +2099,12 @@ function renderQuarterly(){
   var hfKind = roll.hardFailWeeks>0 ? 'red' : 'grn';
   var recordedRatio = roll.weeksRecorded + ' / ' + roll.weeksInQuarter;
 
-  // ================== SECTION 1: Personal & Professional Check-in ==================
+  // ================== NEW SECTION 1: Personal & Professional Check-in ==================
   h += '<div class="q-card"><div class="q-card-hd"><div class="q-t">Personal &amp; Professional Check-in</div><div class="q-m">Open the conversation. Two questions before rocks, scores, or feedback.</div></div><div class="q-card-bd">'+
-       '<div style="margin-bottom:14px"><label class="q-cul-lbl">How are you doing personally?</label>'+
-       '<textarea class="q-ta" onchange="qSetCheckIn(\'personal\',this.value)" placeholder="Share what you want, at the depth you want - health, energy, anything on your mind"'+(archived?' readonly':'')+'>'+esc((rec.checkIn||{}).personal||'')+'</textarea></div>'+
-       '<div><label class="q-cul-lbl">How are you doing professionally?</label>'+
+       '<div style="margin-bottom:14px"><label class="q-cul-lbl">How are you personally?</label>'+
+       '<textarea class="q-ta" onchange="qSetCheckIn(\'personal\',this.value)" placeholder="Life outside work - health, family, energy, anything on your mind"'+(archived?' readonly':'')+'>'+esc((rec.checkIn||{}).personal||'')+'</textarea></div>'+
+       '<div><label class="q-cul-lbl">How are you professionally?</label>'+
        '<textarea class="q-ta" onchange="qSetCheckIn(\'professional\',this.value)" placeholder="Work energy, engagement, growth, anything on your mind"'+(archived?' readonly':'')+'>'+esc((rec.checkIn||{}).professional||'')+'</textarea></div>'+
-       '</div></div>';
-
-  // ================== SECTION 2: What's Working / What's Not Working ==================
-  /* The two questions the quarterly conversation is built on. Issues raised in
-     "what's not working" flow naturally into the Issues & Actions section below. */
-  h += '<div class="q-card"><div class="q-card-hd"><div class="q-t">What\'s Working / What\'s Not Working</div><div class="q-m">The heart of the conversation. Issues that surface here land in Issues &amp; Actions below.</div></div><div class="q-card-bd">'+
-       '<div style="margin-bottom:14px"><label class="q-cul-lbl">What\'s working?</label>'+
-       '<textarea class="q-ta" onchange="qSetWorking(\'working\',this.value)" placeholder="What is going well this quarter - keep doing it"'+(archived?' readonly':'')+'>'+esc((rec.workingNotWorking||{}).working||'')+'</textarea></div>'+
-       '<div><label class="q-cul-lbl">What\'s not working?</label>'+
-       '<textarea class="q-ta" onchange="qSetWorking(\'notWorking\',this.value)" placeholder="What is getting in the way - candid, specific"'+(archived?' readonly':'')+'>'+esc((rec.workingNotWorking||{}).notWorking||'')+'</textarea></div>'+
        '</div></div>';
 
 
@@ -3170,12 +2127,15 @@ function renderQuarterly(){
   }
   h += '</div></div>';
 
-  // ================== Core Values standalone card removed (2026-07-10, Dave):
-  // the values are rated with evidence in the Purpose, Core Values & Seat Fit
-  // section below - showing a passive list two cards earlier was duplication.
+  // ================== SECTION 3: Core Values (VSP mirror, read-only) ==================
   var cvs = (cvsRead.source==='VSP') ? cvsRead.values : cvsRead.values;
+  h += '<div class="q-card"><div class="q-card-hd"><div class="q-t">Core Values'+_srcBadge(cvsRead.source)+'</div><div class="q-m">We hire, fire, and promote on these values.</div></div><div class="q-card-bd">';
+  h += '<ul class="q-cv-list">';
+  cvs.forEach(function(v,i){ h += '<li class="q-cv-item"><span class="q-cv-num">'+(i+1)+'</span>'+esc(v)+'</li>'; });
+  h += '</ul>';
+  h += '</div></div>';
 
-  // ================== SECTION 3: Roles & Responsibilities (VSP Org Chart mirror, read-only) ==================
+  // ================== SECTION 4: Roles & Responsibilities (VSP Org Chart mirror, read-only) ==================
   var hrRolesList = (hrRolesRead.source==='HR' && Array.isArray(hrRolesRead.roles)) ? hrRolesRead.roles : [];
   h += '<div class="q-card"><div class="q-card-hd"><div class="q-t">Roles &amp; Responsibilities<span class="q-src q-src-vsp" style="margin-left:8px">VSP</span></div><div class="q-m">Pulled from the Org Chart in VSP. Only an admin can change these there.</div></div><div class="q-card-bd">';
   if(!hrRolesList.length){
@@ -3187,28 +2147,17 @@ function renderQuarterly(){
   }
   h += '</div></div>';
 
-  // ================== SECTION 4: Purpose, Core Values & Seat Fit ==================
-  /* Purpose is rated exactly like a core value (+ / +- / -), stored under the
-     distinct key '<who>__purpose' so existing per-index value ratings are
-     untouched. Purpose text comes from VSP (Company Focus) with seed fallback. */
-  var _paPurpose = purposeRead && purposeRead.text ? purposeRead.text : '';
-  h += '<div class="q-card"><div class="q-card-hd"><div class="q-t">Purpose, Core Values &amp; Seat Fit'+_srcBadge(cvsRead.source)+'</div><div class="q-m">Self-rate first; supervisor rates in-person. Bar is 80%.</div></div><div class="q-card-bd">'+
-       '<div class="q-vf-help">Score the Purpose and each Core Value: <b style="color:var(--grn)">+</b> (80-100%), <b style="color:var(--amb)">+/-</b> (60-80%), <b style="color:var(--red)">-</b> (below 60%). Seat Fit: understands the role, wants the role, has the capacity to do it.</div>'+
-       (_paPurpose ? '<div class="q-vf-purpose"><span class="q-vf-purpose-lbl">Our Purpose</span> '+esc(_paPurpose)+'</div>' : '')+
-       ('<div class="q-vf-purpose" style="margin-top:6px"><span class="q-vf-purpose-lbl">Our Core Values</span> '+cvs.map(function(v){return esc(v);}).join(' &middot; ')+'</div>')+
+  // ================== SECTION 5: Core Values & Seat Fit ==================
+  h += '<div class="q-card"><div class="q-card-hd"><div class="q-t">Core Values &amp; Seat Fit</div><div class="q-m">Self-rate first; supervisor rates in-person. Bar is 80%.</div></div><div class="q-card-bd">'+
+       '<div class="q-vf-help">Score each Core Value: <b style="color:var(--grn)">+</b> (80-100%), <b style="color:var(--amb)">+/-</b> (60-80%), <b style="color:var(--red)">-</b> (below 60%). Seat Fit: understands the role, wants the role, has the capacity to do it.</div>'+
        '<div style="overflow-x:auto"><table class="q-vf"><thead><tr><th class="first">Person</th>';
-  h += '<th>Purpose</th>';
   cvs.forEach(function(v){ h += '<th>'+esc(v.split(' ').slice(0,3).join(' '))+'</th>'; });
   h += '<th>Understands</th><th>Wants</th><th>Capacity</th><th class="q-vf-agg">Rollup</th></tr></thead><tbody>';
 
-  /* Row helper: renders the person row + accumulates totals.
-     Purpose is rated first, keyed '<who>__purpose', and counts in the Values rollup. */
+  /* Row helper: renders the person row + accumulates totals. */
   function _pndVfRow(whoKey, whoLabel, whoRoleLabel, whoName){
     var row = '<tr><td class="first"><div class="q-person">'+esc(whoName)+'</div><div class="q-role">'+esc(whoRoleLabel)+'</div></td>';
     var scores = [], seatYes = 0, seatTotal = 0;
-    var pr = rec.coreValueRatings[whoKey+'__purpose'];
-    var ps = _pndValRatingScore(pr); if(ps!=null) scores.push(ps);
-    row += '<td>'+_qVal(whoKey, 'purpose', pr)+'</td>';
     cvs.forEach(function(v,i){
       var r = rec.coreValueRatings[whoKey+'__'+i];
       var s = _pndValRatingScore(r); if(s!=null) scores.push(s);
@@ -3250,7 +2199,7 @@ function renderQuarterly(){
   var tsFg = totalSeatTotal===0 ? 'var(--txm)' : (tsPass ? 'var(--grnt)' : 'var(--redt)');
   h += '<tr class="q-vf-totals">'+
        '<td class="first"><div class="q-vf-total-lbl">TOTALS</div></td>'+
-       '<td colspan="'+(cvs.length+1)+'" style="text-align:right;padding-right:12px"><div class="q-vf-chip" style="background:'+tvBg+';color:'+tvFg+'">Values '+(totalVAvg==null?'-':totalVAvg+'%')+'</div></td>'+
+       '<td colspan="'+cvs.length+'" style="text-align:right;padding-right:12px"><div class="q-vf-chip" style="background:'+tvBg+';color:'+tvFg+'">Values '+(totalVAvg==null?'-':totalVAvg+'%')+'</div></td>'+
        '<td colspan="3" style="text-align:right;padding-right:12px"><div class="q-vf-chip" style="background:'+tsBg+';color:'+tsFg+'">Seat '+(totalSeatTotal===0?'-':totalSeatYes+'/'+totalSeatTotal)+'</div></td>'+
        '<td class="q-vf-agg"></td>'+
        '</tr>';
@@ -3272,14 +2221,14 @@ function renderQuarterly(){
          '</tr></thead><tbody>';
     measList.forEach(function(m){
       var st = String(m.status||'').toLowerCase();
-      var stCls = st==='on-track'?'c-grn':st==='off-track'?'c-red':st==='complete'?'c-blu':'c-gry';
+      var stCls = st==='on-track'?'ontrack':st==='off-track'?'offtrack':st==='complete'?'complete':'';
       var stLbl = st==='on-track'?'On Track':st==='off-track'?'Off Track':st==='complete'?'Done':(m.status||'-');
       h += '<tr>'+
            '<td style="text-align:left"><b>'+esc(m.title||'')+'</b></td>'+
            '<td>'+esc(m.goal==null?'-':String(m.goal))+'</td>'+
            '<td>'+esc(m.average==null?'-':String(m.average))+'</td>'+
            '<td>'+esc(m.total==null?'-':String(m.total))+'</td>'+
-           '<td><span class="chip '+stCls+'">'+esc(stLbl)+'</span></td>'+
+           '<td><span class="q-vsp-goal-status'+(stCls?' '+stCls:'')+'">'+esc(stLbl)+'</span></td>'+
            '</tr>';
     });
     h += '</tbody></table>';
@@ -3345,11 +2294,9 @@ function renderQuarterly(){
   } else {
     h += '<div class="q-ref-lbl" style="margin-bottom:10px">Pulled from VSP for '+esc(_nextInfo.q)+' '+_nextInfo.year+'</div>';
     nextGoals.forEach(function(g,i){
-      var _gsCls = g.status==='done'?'c-blu':g.status==='ontrack'?'c-grn':g.status==='offtrack'?'c-red':'c-gry';
-      var _gsLbl = g.status==='done'?'Done':g.status==='ontrack'?'On Track':g.status==='offtrack'?'Off Track':'-';
       h += '<div class="q-goal"><span class="q-goal-num">'+(i+1)+'</span>'+
            '<input class="q-goal-text" value="'+escAttr(g.text||'')+'" readonly>'+
-           (g.status?'<span class="chip '+_gsCls+'">'+esc(_gsLbl)+'</span>':'<span></span>')+
+           (g.status?'<div class="q-goal-status '+esc(g.status)+'" style="cursor:default">'+esc(g.status==='done'?'Done':g.status==='ontrack'?'On Track':g.status==='offtrack'?'Off Track':'-')+'</div>':'<span></span>')+
            '<span></span></div>';
     });
   }
@@ -3360,9 +2307,7 @@ function renderQuarterly(){
   var chain = _pndBuildApprovalChain(state.reportId);
   var cu = currentUser();
   rec.approvals = rec.approvals || {};
-  h += '<div class="q-card q-appr"><div class="q-card-hd"><div class="q-t">Approvals &amp; Sign-offs</div><div class="q-m">Each role reads, adds notes, and signs. Order: Team Member first, then up the chain.</div>'+
-       (!archived ? '<div class="q-actions"><button type="button" class="q-mbtn" onclick="pndEmailSignReminder(\''+state.reportId+'\',\'quarterly\')" title="Opens Outlook drafted to whoever is next in the chain">Email a reminder</button></div>' : '')+
-       '</div><div class="q-card-bd">';
+  h += '<div class="q-card"><div class="q-card-hd"><div class="q-t">Approvals &amp; Sign-offs</div><div class="q-m">Each role reads, adds notes, and signs. Order: Team Member first, then up the chain.</div></div><div class="q-card-bd">';
   h += '<div class="q-appr-lead">Sequential approval. A step unlocks when the prior step is signed.</div>';
   var priorSigned = true;                                    /* first step always unlocked */
   chain.forEach(function(step, i){
@@ -3461,37 +2406,31 @@ function _qVal(who, i, cur){
   var p = cur==='+' ? ' on' : '';
   var m = cur==='+/-' ? ' on' : '';
   var n = cur==='-' ? ' on' : '';
-  /* Numeric indices interpolate bare; string keys (e.g. 'purpose') are quoted
-     so the emitted onclick is a string literal, not a ReferenceError. */
-  var iArg = (typeof i==='number') ? i : '\''+i+'\'';
   return '<div class="q-val">'+
-         '<button class="q-val-btn plus'+p+'" onclick="qSetValueRating(\''+who+'\','+iArg+',\'+\')">+</button>'+
-         '<button class="q-val-btn half'+m+'" onclick="qSetValueRating(\''+who+'\','+iArg+',\'+/-\')">+/-</button>'+
-         '<button class="q-val-btn minus'+n+'" onclick="qSetValueRating(\''+who+'\','+iArg+',\'-\')">-</button>'+
+         '<button class="q-val-btn plus'+p+'" onclick="qSetValueRating(\''+who+'\','+i+',\'+\')">+</button>'+
+         '<button class="q-val-btn half'+m+'" onclick="qSetValueRating(\''+who+'\','+i+',\'+/-\')">+/-</button>'+
+         '<button class="q-val-btn minus'+n+'" onclick="qSetValueRating(\''+who+'\','+i+',\'-\')">-</button>'+
          '</div>';
 }
 function _goalStatusChip(status, i){
-  var opts = [['done','Done','c-blu'],['ontrack','On Track','c-grn'],['offtrack','Off Track','c-red']];
+  var opts = [['done','Done'],['ontrack','On Track'],['offtrack','Off Track']];
   var cur = opts.find(function(o){ return o[0]===status; });
   var label = cur ? cur[1] : 'Set status';
-  var cls = cur ? cur[2] : '';
-  return '<select class="q-goal-select'+(cls?' '+cls:'')+'" onchange="qEditGoal('+i+',\'status\',this.value)">'+
+  var cls = cur ? cur[0] : '';
+  return '<select class="q-goal-status'+(cls?' '+cls:'')+'" onchange="qEditGoal('+i+',\'status\',this.value)">'+
          '<option value=""'+(status?'':' selected')+'>Set status</option>'+
          opts.map(function(o){return '<option value="'+o[0]+'"'+(status===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+
          '</select>';
 }
 /* VSP-vocabulary status select for the Quarterly Goals mirror. VSP uses
    on-track / off-track / complete. Wraps the change through qSetGoalStatus,
-   which persists as a per-huddle override until a real VSP write API lands.
-   Uses the .q-goal-select base (module-CSS select chrome) plus canon .c-*
-   color modifiers (chip color vocabulary), so the dropdown tint matches the
-   chip vocabulary without being a chip element itself. */
+   which persists as a per-huddle override until a real VSP write API lands. */
 function _vspGoalStatusSelect(goalKey, status, archived){
-  var opts = [['on-track','On Track','c-grn'],['off-track','Off Track','c-red'],['complete','Done','c-blu']];
+  var opts = [['on-track','On Track'],['off-track','Off Track'],['complete','Done']];
   var cur = opts.find(function(o){ return o[0]===status; });
-  var cls = cur ? cur[2] : '';
+  var cls = cur ? cur[0].replace('-','') : '';
   var attrs = archived ? ' disabled' : '';
-  return '<select class="q-goal-select'+(cls?' '+cls:'')+'" onchange="qSetGoalStatus(\''+escAttr(goalKey)+'\',this.value)"'+attrs+'>'+
+  return '<select class="q-vsp-goal-status'+(cls?' '+cls:'')+'" onchange="qSetGoalStatus(\''+escAttr(goalKey)+'\',this.value)"'+attrs+'>'+
          opts.map(function(o){return '<option value="'+o[0]+'"'+(status===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+
          '</select>';
 }
@@ -4315,10 +3254,7 @@ function renderAnnual(){
        '<div class="pg-sub">'+esc(fullName(person))+' &middot; '+esc(person.roleLabel||'')+' &middot; '+state.annualYear+(sup?' &middot; Supervisor: '+esc(fullName(sup)):'')+'</div>';
 
   if(archived){
-    h += '<div class="q-archived-banner">'+
-           '<div class="q-archived-hd"><span class="q-archived-badge">'+_check()+' Archived</span><span>Signed off by every role on '+esc(rec.archivedAt.substring(0,10))+'. Read-only.</span></div>'+
-           '<div class="q-archived-cta"><button type="button" class="q-arch-next-btn" onclick="aStartNextFromArchived()">Start '+(state.annualYear+1)+' Review &rarr;</button></div>'+
-         '</div>';
+    h += '<div class="q-archived-banner"><div class="q-archived-hd"><span class="q-archived-badge">'+_check()+' Archived</span><span>Signed off by every role on '+esc(rec.archivedAt.substring(0,10))+'. Read-only.</span></div></div>';
   }
 
   // Meta strip
@@ -4335,10 +3271,7 @@ function renderAnnual(){
     });
     h += '</select></label>';
   }
-  h += '<div class="q-more-wrap"><button type="button" class="q-mbtn q-more-btn" onclick="event.stopPropagation();qToggleMoreMenu(event)" title="More actions" aria-label="More actions">&#8942; More</button>';
-  h += '<div class="q-more-menu'+(state.qMoreOpen?' open':'')+'">';
-  h += '<button type="button" class="q-more-item" onclick="state.qMoreOpen=false;qPrintHuddle()">Print or export PDF</button>';
-  h += '</div></div>';
+  h += '<button class="q-mbtn" onclick="qPrintHuddle()">Print</button>';
   h += '<span class="autosave">'+(archived?'':'Saves automatically')+'</span>';
   h += '</div></div>';
 
@@ -4347,25 +3280,8 @@ function renderAnnual(){
     if(cuNow){ h += '<div class="q-youare">You are signed in as <b>'+esc(fullName(cuNow))+'</b> &middot; '+esc(cuNow.roleLabel||'')+'</div>'; }
   }
 
-  // Archived jump list (mirror of Quarterly - lets users flip between historical years)
-  var aArchivedList = _pndArchivedAnnualsForPerson(state.reportId);
-  if(aArchivedList.length){
-    h += '<div class="q-archived-list">Archived: ';
-    aArchivedList.forEach(function(a, i){
-      var isActive = (a.year===state.annualYear);
-      h += (i>0?' &middot; ':'')+'<a href="#" onclick="aJumpArchived('+a.year+');return false" class="'+(isActive?'active':'')+'">'+a.year+'</a>';
-    });
-    h += '</div>';
-  }
-
-  // Signature progress bar - 1-second read on how close to complete
-  h += _pndRenderSigProgress(rec, _pndBuildApprovalChain(state.reportId));
-
-  // Review scheduling (front-end date + .ics; Outlook placeholder per Integration Placeholder Pattern v1)
-  h += _pndRenderReviewSchedule(person, 'annual', String(state.annualYear), archived);
-
-  // Instructions note - refreshed for the current structure. Old copy referenced GWC (EOS term) and "bring this to your Quarterly Conversation" which is now its own structured meeting.
-  h += '<div class="q-card"><div class="q-card-bd" style="background:var(--sur2)"><b>How to use this review:</b> Complete each section below with your supervisor. Sections mirrored from VSP (Purpose, Core Values, Roles, Measurables, Rocks) are pulled read-only - an admin sets them in VSP. This review is the anchor for the four Quarterly Performance Huddles you will have this year; the Development Plan section at the end is what those quarterlies revisit.</div></div>';
+  // Instructions note (matches LIDA seed)
+  h += '<div class="q-card"><div class="q-card-bd" style="background:var(--sur2)"><b>NOTE: PLEASE COMPLETE THE FOLLOWING AREAS:</b> Your Goals, the LIDA Homes Core Values, your Roles and Responsibilities, your Measurables, the People Analyzer/GWC, and the Delegate/Elevate exercise (annually). Please then rate the culture and your job satisfaction, and bring this document to your Quarterly Conversation.</div></div>';
 
   // Sections 1-4: Rocks Q1-Q4 (LIDA form shows Q4 first, then Q3, Q2, Q1)
   ['Q4','Q3','Q2','Q1'].forEach(function(qLbl,i){
@@ -4378,11 +3294,9 @@ function renderAnnual(){
     } else {
       goals.forEach(function(g,gi){
         var st = g.status||'';
-        var _asCls = st==='done'?'c-blu':st==='ontrack'?'c-grn':st==='offtrack'?'c-red':'c-gry';
-        var _asLbl = st==='done'?'Done':st==='ontrack'?'On Track':st==='offtrack'?'Off Track':'-';
         h += '<div class="q-goal'+(st?' '+st:'')+'"><span class="q-goal-num">'+(gi+1)+'</span>'+
              '<input class="q-goal-text" value="'+escAttr(g.text||'')+'" readonly>'+
-             '<span class="chip '+_asCls+'">'+esc(_asLbl)+'</span>'+
+             '<div class="q-goal-status '+(st||'')+'" style="cursor:default">'+esc(st==='done'?'Done':st==='ontrack'?'On Track':st==='offtrack'?'Off Track':'-')+'</div>'+
              '<span></span></div>';
       });
     }
@@ -4481,14 +3395,14 @@ function renderAnnual(){
     h += '<table class="q-meas-tbl"><thead><tr><th style="text-align:left">Metric</th><th>Goal</th><th>Average</th><th>Total</th><th>Status</th></tr></thead><tbody>';
     measListA.forEach(function(m){
       var st = String(m.status||'').toLowerCase();
-      var stCls = st==='on-track'?'c-grn':st==='off-track'?'c-red':st==='complete'?'c-blu':'c-gry';
+      var stCls = st==='on-track'?'ontrack':st==='off-track'?'offtrack':st==='complete'?'complete':'';
       var stLbl = st==='on-track'?'On Track':st==='off-track'?'Off Track':st==='complete'?'Done':(m.status||'-');
       h += '<tr>'+
            '<td style="text-align:left"><b>'+esc(m.title||'')+'</b></td>'+
            '<td>'+esc(m.goal==null?'-':String(m.goal))+'</td>'+
            '<td>'+esc(m.average==null?'-':String(m.average))+'</td>'+
            '<td>'+esc(m.total==null?'-':String(m.total))+'</td>'+
-           '<td><span class="chip '+stCls+'">'+esc(stLbl)+'</span></td>'+
+           '<td><span class="q-vsp-goal-status'+(stCls?' '+stCls:'')+'">'+esc(stLbl)+'</span></td>'+
            '</tr>';
     });
     h += '</tbody></table>';
@@ -4690,9 +3604,7 @@ function _pndRenderAnnualApprovals(person, rec, archived){
   var chain = _pndBuildApprovalChain(state.reportId);
   var cu = currentUser();
   rec.approvals = rec.approvals || {};
-  var h = '<div class="q-card"><div class="q-card-hd"><div class="q-t">16. Signature</div><div class="q-m">By signing below, you confirm that the document has been signed and acknowledge that further modifications to the document will no longer be possible.</div>'+
-       (!archived ? '<div class="q-actions"><button type="button" class="q-mbtn" onclick="pndEmailSignReminder(\''+state.reportId+'\',\'annual\')" title="Opens Outlook drafted to whoever is next in the chain">Email a reminder</button></div>' : '')+
-       '</div><div class="q-card-bd">';
+  var h = '<div class="q-card"><div class="q-card-hd"><div class="q-t">16. Signature</div><div class="q-m">By signing below, you confirm that the document has been signed and acknowledge that further modifications to the document will no longer be possible.</div></div><div class="q-card-bd">';
   h += '<div class="q-appr-lead">Sequential approval. A step unlocks when the prior step is signed.</div>';
   var priorSigned = true;
   chain.forEach(function(step, i){
@@ -4863,24 +3775,6 @@ function aSignApproval(slotKey){
 /* ---- Handlers (all global for render_check) ---- */
 function selectReport(id){ state.reportId = id; renderPage(); }
 function changeWeek(delta){ state.weekIso = addDays(state.weekIso, delta*7); renderPage(); }
-/* Mark this week's huddle as discussed with the supervisor. Not a signature chain -
-   just a visible marker so a supervisor can see the meeting happened. */
-function toggleDiscussed(checked){
-  var rec = getRec();
-  rec.discussed = !!checked;
-  rec.discussedAt = checked ? new Date().toISOString() : null;
-  putRec(rec);
-  renderPage();
-}
-/* Assign a meeting cadence to a role. Admin-only entry point from the meta strip.
-   Persists to localStorage and re-renders so the huddle-week indicator and the
-   dashboard update immediately. */
-function setHuddleCadence(roleLabel, cadence){
-  if(!roleLabel) return;
-  setCadenceForRole(roleLabel, cadence);
-  toast(roleLabel+' cadence set to '+cadenceLabel(cadence));
-  renderPage();
-}
 
 /* Phase override for the current week (D). Applies to the week's huddle rec
    so aggregation and archived reads honor it. Renders after save. */
@@ -4952,13 +3846,6 @@ function qSetCheckIn(field, val){
   r.checkIn[field] = val;
   putQuarterly(r);
 }
-function qSetWorking(field, val){
-  var r=getQuarterly();
-  if(r.archivedAt) return;
-  r.workingNotWorking = r.workingNotWorking || {working:'',notWorking:''};
-  r.workingNotWorking[field] = val;
-  putQuarterly(r);
-}
 function qSetMFeedback(item, field, val){
   var r=getQuarterly();
   if(r.archivedAt) return;
@@ -4995,6 +3882,15 @@ function qSetGoalStatus(goalKey, status){
     var api = window.SMB_VSP_GOALS;
     if(api && typeof api.setStatus === 'function'){
       api.setStatus(goalKey, status);                       /* push through when VSP is wired */
+    } else {
+      /* v108 bridge outbox: VSP polls this key and applies the flip. */
+      try{
+        var _obk = 'SMB_BRIDGE_VSP_GOAL_SETSTATUS_v1';
+        var _cur = []; try{ var raw = localStorage.getItem(_obk); if(raw){ var p = JSON.parse(raw); if(Array.isArray(p)) _cur = p; } }catch(e){}
+        _cur.push({ id: 'pnd-' + Date.now() + '-' + Math.random().toString(36).slice(2,7), goalId: goalKey, status: status, at: new Date().toISOString() });
+        if(_cur.length > 200) _cur = _cur.slice(-200);
+        localStorage.setItem(_obk, JSON.stringify(_cur));
+      }catch(e){}
     }
   }catch(e){}
   renderPage();
@@ -5026,28 +3922,6 @@ function qJumpArchived(year, q){
   state.quarterlyYear = year;
   state.quarterlyQ = q;
   renderPage();
-}
-
-/* Jump to a specific archived annual review. Mirror of qJumpArchived. */
-function aJumpArchived(year){
-  state.annualYear = parseInt(year) || currentYearOf(new Date());
-  renderPage();
-}
-
-/* Start the next-period huddle from an archived one. Cross year boundary if Q4.
-   These are wired into the archived banner buttons on Quarterly and Annual and
-   provide the "continuity" flow so users are never stranded on a signed-off record. */
-function qStartNextFromArchived(){
-  var next = _pndNextQuarter(state.quarterlyYear, state.quarterlyQ);
-  state.quarterlyYear = next.year;
-  state.quarterlyQ = next.q;
-  renderPage();
-  toast(next.q+' '+next.year+' Quarterly Huddle is ready');
-}
-function aStartNextFromArchived(){
-  state.annualYear = state.annualYear + 1;
-  renderPage();
-  toast(state.annualYear+' Annual Review is ready');
 }
 
 /* Pulled-field override handlers.
@@ -5309,10 +4183,8 @@ function renderHistoryModal(person){
       return '<div class="hist-row"><span class="hist-wk">'+esc(h.weekIso)+'</span><span class="spacer"></span><span style="color:var(--txm)">'+pct+'</span>'+tag+'</div>';
     }).join('');
   }
-  /* Modal Keydown StopPropagation Rule v1 (Standards v2.32 / D-88):
-     onkeydown + onclick stopPropagation on .modal container, type="button" on every button. */
-  return '<div class="modal-overlay" onclick="closeHistory()"><div class="modal" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Huddle history">'+
-    '<div class="modal-h"><span class="smb-modal-title">History - '+esc(fullName(person))+'</span><button type="button" class="modal-x" onclick="closeHistory()" aria-label="Close">&times;</button></div>'+
+  return '<div class="modal-overlay" onclick="closeHistory()"><div class="modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Huddle history">'+
+    '<div class="modal-h"><span class="smb-modal-title">History - '+esc(fullName(person))+'</span><button class="modal-x" onclick="closeHistory()" aria-label="Close">&times;</button></div>'+
     '<div class="modal-b">'+rows+'</div></div></div>';
 }
 
@@ -5358,286 +4230,22 @@ function emitPndSignals(){
   };
 }
 
-/* ============================================================
-   P&D CROSS-MODULE READ CONTRACT: window.SMB_PND_HUDDLES (D-98)
-   P&D owns the performance record (scorecard entries, weekly scores, the
-   Discussed marker, review sign-off state). VSP owns the meeting and agenda.
-   VSP's 1:1 agenda consumes this contract to render its "Scorecard review"
-   agenda item with live status, badged Source: P&D. P&D is the sole writer.
-   All reads are side-effect-free and safe to call when P&D data is absent.
-   ============================================================ */
-window.SMB_PND_HUDDLES = {
-  /* Weekly huddle scorecard status for a person + week.
-     Returns { status: 'complete'|'in-progress'|'not-started'|'away'|'no-standard',
-               pct: number|null, hardFail: boolean, discussed: boolean,
-               discussedAt: iso-string|null } */
-  statusFor: function(personId, weekIso){
-    try{
-      var person = personById(personId);
-      if(!person) return { status:'no-standard', pct:null, hardFail:false, discussed:false, discussedAt:null };
-      var st = _pndHuddleStatusThisWeek(personId, weekIso);
-      if(st==='no-std') return { status:'no-standard', pct:null, hardFail:false, discussed:false, discussedAt:null };
-      var all = _pndLoadHuddles();
-      var rec = all[personId+'__'+weekIso] || null;
-      var pct = null, hardFail = false;
-      if(rec && !rec.away){
-        var scores = _pndLastNScores(personId, weekIso, 1);
-        if(scores.length){ pct = scores[0].pct; hardFail = !!scores[0].hardFail; }
-      }
-      return {
-        status: st,
-        pct: pct,
-        hardFail: hardFail,
-        discussed: !!(rec && rec.discussed),
-        discussedAt: (rec && rec.discussedAt) || null
-      };
-    }catch(e){
-      return { status:'not-started', pct:null, hardFail:false, discussed:false, discussedAt:null };
-    }
-  },
-  /* Current-period review state for a person.
-     kind: 'quarterly' | 'annual'.
-     Returns { period, state: 'complete'|'in-progress'|'not-started',
-               scheduledDate: 'YYYY-MM-DD'|null, scheduledTime: 'HH:MM'|null } */
-  reviewFor: function(personId, kind){
-    try{
-      var person = personById(personId);
-      if(!person) return null;
-      var rs = _pndReviewStatus(person, kind);
-      var now = new Date();
-      var period = kind==='quarterly' ? (currentYearOf(now)+'-'+currentQuarterOf(now)) : String(currentYearOf(now));
-      var rd = getReviewDate(personId, kind, period);
-      var stateWord = rs.cls==='c-grn' ? 'complete' : rs.cls==='c-amb' ? 'in-progress' : 'not-started';
-      return { period: period, state: stateWord, scheduledDate: rd?rd.date:null, scheduledTime: rd?(rd.time||null):null };
-    }catch(e){ return null; }
-  }
-};
-
-/* ---- Tour Engine v1 (ported from VSP_Module_v10) ----
-   Overlay + spotlight + tooltip + Next/Prev/Skip navigation. First-run walkthrough
-   is stored per-user in localStorage under `smb_pnd_tours_seen_v1`; the welcome
-   card auto-launches once per user and never again. */
+/* ---- Tour Engine v1 ---- */
 window.TOUR_REGISTRY = window.TOUR_REGISTRY || {};
-
-var _tour = { active:false, tourId:null, stepIdx:0, steps:[], resizeHandler:null };
-
-function _pndToursSeenLoad(){
-  try{ var raw = localStorage.getItem('smb_pnd_tours_seen_v1'); return raw ? JSON.parse(raw) : {}; }
-  catch(e){ return {}; }
-}
-function _pndToursSeenSave(m){ try{ localStorage.setItem('smb_pnd_tours_seen_v1', JSON.stringify(m)); }catch(e){} }
-function hasSeenTour(tourId){
-  var cu = currentUser(); if(!cu) return false;
-  var m = _pndToursSeenLoad(); var seen = m[cu.id] || [];
-  return seen.indexOf(tourId) >= 0;
-}
-function markTourSeen(tourId){
-  var cu = currentUser(); if(!cu) return;
-  var m = _pndToursSeenLoad(); if(!Array.isArray(m[cu.id])) m[cu.id] = [];
-  if(m[cu.id].indexOf(tourId) < 0){ m[cu.id].push(tourId); _pndToursSeenSave(m); }
-}
-function startTour(tourId){
-  var tour = window.TOUR_REGISTRY[tourId];
-  if(!tour){ console.warn('Tour not found:', tourId); return; }
-  _tour.active = true; _tour.tourId = tourId; _tour.stepIdx = 0; _tour.steps = tour.steps;
-  _ensureTourElements();
-  _renderTourStep();
-  _tour.resizeHandler = function(){ _renderTourStep(); };
-  window.addEventListener('resize', _tour.resizeHandler);
-}
-function nextTourStep(){
-  if(_tour.stepIdx < _tour.steps.length - 1){ _tour.stepIdx++; _renderTourStep(); }
-  else { endTour(true); }
-}
-function prevTourStep(){
-  if(_tour.stepIdx > 0){ _tour.stepIdx--; _renderTourStep(); }
-}
-function endTour(completed){
-  _tour.active = false;
-  if(completed && _tour.tourId) markTourSeen(_tour.tourId);
-  ['tour-overlay-top','tour-overlay-bottom','tour-overlay-left','tour-overlay-right','tour-spotlight','tour-tooltip'].forEach(function(id){
-    var el = document.getElementById(id); if(el) el.parentNode.removeChild(el);
-  });
-  if(_tour.resizeHandler){ window.removeEventListener('resize', _tour.resizeHandler); _tour.resizeHandler = null; }
-  _tour.tourId = null; _tour.steps = []; _tour.stepIdx = 0;
-}
-function _ensureTourElements(){
-  if(document.getElementById('tour-tooltip')) return;
-  ['tour-overlay-top','tour-overlay-bottom','tour-overlay-left','tour-overlay-right'].forEach(function(id){
-    var d = document.createElement('div'); d.id = id; d.className = 'tour-overlay'; document.body.appendChild(d);
-  });
-  var sp = document.createElement('div'); sp.id = 'tour-spotlight'; sp.className = 'tour-spotlight'; document.body.appendChild(sp);
-  var tt = document.createElement('div'); tt.id = 'tour-tooltip'; tt.className = 'tour-tooltip'; document.body.appendChild(tt);
-}
-function _renderTourStep(){
-  var step = _tour.steps[_tour.stepIdx]; if(!step) return;
-  var run = function(){
-    var target = step.target ? document.querySelector(step.target) : null;
-    var overlayT = document.getElementById('tour-overlay-top');
-    var overlayB = document.getElementById('tour-overlay-bottom');
-    var overlayL = document.getElementById('tour-overlay-left');
-    var overlayR = document.getElementById('tour-overlay-right');
-    var spotlight = document.getElementById('tour-spotlight');
-    var tooltip = document.getElementById('tour-tooltip');
-    var proceed = function(){
-      var rect;
-      if(target){
-        rect = target.getBoundingClientRect();
-        var pad = 6;
-        var top = Math.max(0, rect.top - pad);
-        var left = Math.max(0, rect.left - pad);
-        var right = Math.min(window.innerWidth, rect.right + pad);
-        var bottom = Math.min(window.innerHeight, rect.bottom + pad);
-        overlayT.style.cssText = 'top:0;left:0;width:100%;height:'+top+'px';
-        overlayB.style.cssText = 'top:'+bottom+'px;left:0;width:100%;height:'+Math.max(0,window.innerHeight-bottom)+'px';
-        overlayL.style.cssText = 'top:'+top+'px;left:0;width:'+left+'px;height:'+(bottom-top)+'px';
-        overlayR.style.cssText = 'top:'+top+'px;left:'+right+'px;width:'+Math.max(0,window.innerWidth-right)+'px;height:'+(bottom-top)+'px';
-        spotlight.style.cssText = 'top:'+top+'px;left:'+left+'px;width:'+(right-left)+'px;height:'+(bottom-top)+'px;display:block';
-      } else {
-        overlayT.style.cssText = 'top:0;left:0;width:100%;height:100%';
-        overlayB.style.cssText = 'display:none';
-        overlayL.style.cssText = 'display:none';
-        overlayR.style.cssText = 'display:none';
-        spotlight.style.display = 'none';
-      }
-      var total = _tour.steps.length, idx = _tour.stepIdx, isFirst = idx===0, isLast = idx===total-1;
-      tooltip.innerHTML =
-        '<div class="tour-progress-bar"><div class="tour-progress-fill" style="width:'+((idx+1)/total*100)+'%"></div></div>'+
-        '<div class="tour-tt-content">'+
-          '<div class="tour-tt-step">Step '+(idx+1)+' of '+total+'</div>'+
-          '<h3 class="tour-tt-title">'+esc(step.title)+'</h3>'+
-          '<div class="tour-tt-body">'+step.body+'</div>'+
-        '</div>'+
-        '<div class="tour-tt-footer">'+
-          '<button type="button" class="tour-skip" onclick="endTour(true)">Skip tour</button>'+
-          '<div class="tour-nav-btns">'+
-            (!isFirst ? '<button type="button" class="tour-btn tour-btn-ghost" onclick="prevTourStep()">Back</button>' : '')+
-            '<button type="button" class="tour-btn tour-btn-primary" onclick="nextTourStep()">'+(isLast?'Finish':'Next')+'</button>'+
-          '</div>'+
-        '</div>';
-      tooltip.style.display = 'block';
-      _positionTooltip(target, step.position||'auto', tooltip);
-    };
-    if(target){
-      var preRect = target.getBoundingClientRect();
-      var isVisible = preRect.top >= 0 && preRect.bottom <= window.innerHeight;
-      if(!isVisible){ target.scrollIntoView({behavior:'smooth', block:'center'}); setTimeout(proceed, 300); }
-      else { proceed(); }
-    } else { proceed(); }
-  };
-  if(step.onBefore){
-    try{ step.onBefore(); }catch(e){ console.warn('Tour onBefore error:', e); }
-    setTimeout(run, 150);
-  } else { run(); }
-}
-function _positionTooltip(target, position, tooltip){
-  var tt = tooltip;
-  tt.style.left = '50%'; tt.style.top = '50%'; tt.style.transform = 'translate(-50%,-50%)'; tt.removeAttribute('data-pos');
-  if(!target){ tt.setAttribute('data-pos','center'); return; }
-  var ttRect = tt.getBoundingClientRect();
-  var rect = target.getBoundingClientRect();
-  var margin = 14;
-  var pos = position;
-  if(pos === 'auto'){
-    if(rect.right + margin + ttRect.width <= window.innerWidth) pos = 'right';
-    else if(rect.left - margin - ttRect.width >= 0) pos = 'left';
-    else if(rect.bottom + margin + ttRect.height <= window.innerHeight) pos = 'bottom';
-    else pos = 'top';
-  }
-  var top, left;
-  if(pos === 'right'){ top = rect.top + rect.height/2 - ttRect.height/2; left = rect.right + margin; }
-  else if(pos === 'left'){ top = rect.top + rect.height/2 - ttRect.height/2; left = rect.left - ttRect.width - margin; }
-  else if(pos === 'top'){ top = rect.top - ttRect.height - margin; left = rect.left + rect.width/2 - ttRect.width/2; }
-  else if(pos === 'bottom'){ top = rect.bottom + margin; left = rect.left + rect.width/2 - ttRect.width/2; }
-  else { tt.setAttribute('data-pos','center'); return; }
-  top = Math.max(10, Math.min(window.innerHeight - ttRect.height - 10, top));
-  left = Math.max(10, Math.min(window.innerWidth - ttRect.width - 10, left));
-  tt.style.left = left + 'px'; tt.style.top = top + 'px'; tt.style.transform = 'none';
-  tt.setAttribute('data-pos', pos);
-}
-/* ---- pnd-overview: 25-step first-run tour walking a supervisor through
-   Weekly Huddle -> Quarterly Huddle -> Annual PDP. */
-window.TOUR_REGISTRY['pnd-overview'] = {
-  title: 'Performance & Development Tour',
-  audience: 'all',
-  steps: [
-    { title:'Welcome to Performance & Development',
-      body:'This is where your team runs weekly huddles, does the quarterly review conversation, and completes the annual leadership review. About three minutes - I will walk you through each surface.',
-      position:'center' },
-    { onBefore:function(){ navTo('huddle'); },
-      title:'The Weekly Huddle',
-      body:'Every direct report has a weekly scorecard. Mark Yes or No against each role deliverable for the week. This is the meeting where a manager and their report have the same conversation, on the same scoreline, at the same rhythm.' },
-    { onBefore:function(){ navTo('huddle'); }, target:'.person-picker, .pd-person-picker, select[onchange*="reportId"]',
-      title:'Pick the person',
-      body:'Switch between the people who report to you. Each shows their own weekly scoreline, their own quarterly, their own annual.', position:'bottom' },
-    { target:'.week-nav, .pd-week-nav',
-      title:'Pick the week',
-      body:'Navigate back to a prior week to enter data late, or forward to preview next week. Yellow highlights this week. The current week is always the default when the page loads.', position:'bottom' },
-    { target:'input[type="checkbox"][onclick*="away"], .away-toggle, label[for*="away"]',
-      title:'Away weeks',
-      body:'Tick <b>Away</b> when the person was out (holiday, sick, PTO). Away weeks are excluded from both the numerator and denominator of the Weekly Score - they do not drag the average down.', position:'bottom' },
-    { target:'table.sc, #pd-main table',
-      title:'The scorecard grid',
-      body:'Each row is a role deliverable with a performance standard and a deadline. Click a cell to mark Yes or No. The <b>Deadline</b> column shows when each item was due, so the manager and report agree on what "on time" meant.', position:'top' },
-    { target:'#pd-main table tbody tr:nth-child(1), #pd-main table tbody tr:nth-child(2)',
-      title:'Priority Rules (hard-fail)',
-      body:'The first two rows are Priority Rules. If either is <b>No</b>, the entire week is a 0% - regardless of how many other rows are Yes. This is the "the basics matter" rule.', position:'top' },
-    { target:'.weekly-score, .weekly-score-cell, tr:last-child',
-      title:'Weekly Score',
-      body:'Yes divided by total, with hard-fail weeks pinned to 0% and Away weeks excluded from both sides of the ratio. This is the same scorecard engine VSP uses.', position:'top' },
-    { target:'.conv-card, .discussion-items, textarea[onchange*="discussion"]',
-      title:'Discussion items',
-      body:'One thing you want to raise. One thing they want to raise. Keep the conversation short and specific - the scoreline is the objective ground; this is where you name what to do about it.', position:'top' },
-    { target:'.goals-for-week, textarea[onchange*="goalsForWeek"], textarea[onchange*="goals"]',
-      title:'Goals for the week',
-      body:'The three things the person is committing to complete this week. Last week\'s goals appear on the left with a Done/Not-done column so accountability carries forward each Monday.', position:'top' },
-    { onBefore:function(){ navTo('quarterly'); },
-      title:'The Quarterly Huddle',
-      body:'Once every 13 weeks, you have a longer conversation. This is the 5-5-5 pattern: eleven sections in a fixed order, designed to end with clarity on the next quarter.' },
-    { onBefore:function(){ navTo('quarterly'); }, target:'.q-card:nth-of-type(1), .q-t',
-      title:'Personal & Professional Check-in',
-      body:'Two open prompts before anything else - how are you doing personally, how are you doing professionally. The person shares what they want, at the depth they want. Everything after this is easier when you start here.', position:'right' },
-    { target:'.q-card .q-t',
-      title:'Quarterly Goals from VSP',
-      body:'Goals are set in <b>VSP</b>, not here. This card mirrors them read-only. The one editable field is the status pill: On Track, Off Track, Done. Flip it live during the conversation.', position:'right' },
-    { target:'.q-src, .q-src-vsp',
-      title:'The VSP badge means: source of truth is elsewhere',
-      body:'Any card with the <b>VSP</b> or <b>Org Chart</b> badge is a mirror. Purpose, Core Values, Roles & Responsibilities, Measurables - all read-only here. To change them, open VSP or the Org Chart.', position:'bottom' },
-    { target:'.q-card',
-      title:'Purpose, Core Values & Seat Fit',
-      body:'Rate the person on the company Purpose and each core value (+, +/-, -), then Seat Fit: understands the role, wants it, has the capacity to do it. This is the right-person-right-seat conversation, once a quarter.', position:'right' },
-    { target:'.q-meas-tbl, .q-card table',
-      title:'Measurables',
-      body:'The KPIs the person owns, pulled from VSP. Read-only. If a number is wrong, fix it in VSP; the mirror updates.', position:'top' },
-    { target:'.q-card table',
-      title:'The Scorecard, embedded',
-      body:'The same weekly scorecard grid from the huddle page appears here, fully functional. You can enter data, change deadlines, add measurables - the changes save back to the same store.', position:'top' },
-    { target:'.q-card',
-      title:'Manager Feedback',
-      body:'Four Yes/No questions from the report about the manager. Each has an optional example. This is where upward feedback lives in the review - separate from the scoreline, on a real rhythm.', position:'right' },
-    { target:'.q-card',
-      title:'Issues & Actions',
-      body:'What came up. What was decided. What action is assigned to whom, by when. The three fields that turn a conversation into a commitment.', position:'right' },
-    { target:'.q-card',
-      title:"Next Quarter's Goals",
-      body:'Read-only from VSP for the next quarter (Q3 -> Q4, or Q4/2026 -> Q1/2027). If nothing shows, set them in VSP before signing off.', position:'right' },
-    { target:'.q-card',
-      title:'Approvals & Sign-offs',
-      body:'Five slots in order: the person, their supervisor, VP Construction, HR, and President. Each slot unlocks when the prior slot signs. Once every slot signs, the record is archived and read-only.', position:'top' },
-    { onBefore:function(){ navTo('annual'); },
-      title:'The Annual PDP',
-      body:'Once a year, the full leadership review and development plan. Deeper than the quarterly, tied to the LIDA Leadership Framework for the role.' },
-    { onBefore:function(){ navTo('annual'); }, target:'.q-card',
-      title:'The Leadership Framework',
-      body:'Ten competencies per role, ten line items per competency. Each item scored 1-10 by the person themselves, then independently by the supervisor. The gap between the two scores drives the conversation.', position:'right' },
-    { target:'.q-card',
-      title:'The Development Plan',
-      body:'The last section: three priority development areas for the coming 12 months, with target state, behavior changes, measurement, and quarterly checkpoints. This is what the quarterly conversation revisits.', position:'right' },
-    { title:"That's the whole loop",
-      body:'Weekly for pace. Quarterly for the conversation. Annually for the leadership standard. All three surfaces read from the same VSP source of truth, so a change in one place propagates everywhere. You can restart this tour anytime from the header.',
-      position:'center' }
+window.TOUR_REGISTRY[MODULE_ID] = {
+  huddle:[
+    {sel:'.sc', title:'The weekly standard', body:'Each row is a role deliverable. Mark Yes or No. The two hard-fail rows fail the whole week if missed, regardless of percentage.'},
+    {sel:'.score-grid', title:'Weekly score', body:'Yes divided by total. This is the same scorecard engine as VSP, in Yes/No mode.'},
+    {sel:'.conv-grid', title:'The conversation', body:'The two questions that make a standard a huddle, not an audit.'}
   ]
 };
+function startTour(pageId){
+  var t = window.TOUR_REGISTRY[MODULE_ID] && window.TOUR_REGISTRY[MODULE_ID][pageId||state.page];
+  if(!t || !t.length){ return; }
+  var first = document.querySelector(t[0].sel);
+  if(first && first.scrollIntoView) first.scrollIntoView({behavior:'smooth',block:'center'});
+  toast('Tour: '+t[0].title);
+}
 
 /* ---- utils ---- */
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -5648,11 +4256,6 @@ function init(){
   state.weekIso = isoDate(mondayOf(new Date()));
   emitPndSignals();
   renderShell();
-  /* First-run tour: auto-launch for users who have not yet seen pnd-overview.
-     Delayed so first render can paint before the overlay drops in. */
-  setTimeout(function(){
-    try{ if(!hasSeenTour('pnd-overview')) startTour('pnd-overview'); }catch(e){}
-  }, 800);
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
 else init();
@@ -6108,33 +4711,25 @@ function renderScorecard(){
         var _pndAggColor = _pndAgg==null ? 'var(--txm)' : (_pndAgg>=90 ? '#16a34a' : (_pndAgg>=75 ? '#d97706' : '#dc2626'));
 
         h+='<tr class="pnd-totals-row">';
-        /* Label spans the 7 descriptive/frozen columns (cb, trend, rd, title, deadline, goal, avg). */
-        h+='<td colspan="7" style="position:sticky;left:0;z-index:2;background:var(--sur2);padding:10px 14px;color:var(--txt);font-size:var(--fz-body);border-top:2px solid var(--brd);vertical-align:middle">'+
-             '<span style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">Weekly Score</span>'+
+        h+='<td colspan="7" style="position:sticky;left:0;z-index:2;background:var(--sur2);padding:14px 14px;color:var(--txt);font-size:var(--fz-body);border-top:2px solid var(--brd);border-right:2px solid var(--brd)">'+
+             '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">'+
+               '<span style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">Weekly Score</span>'+
+               '<span title="Average of visible weeks (Away and no-data weeks excluded)" style="font-weight:700;font-size:var(--fz-lg);color:'+_pndAggColor+'">'+(_pndAgg==null?'-':_pndAgg+'%')+'</span>'+
+             '</div>'+
            '</td>';
-        /* Aggregate sits in its own cell under the Total column, matching the per-row Total alignment. */
-        h+='<td title="Average of visible weeks (Away and no-data weeks excluded)" style="text-align:center;padding:10px 8px;background:var(--sur2);border-top:2px solid var(--brd);border-right:2px solid var(--brd);vertical-align:middle;font-weight:700;font-size:var(--fz-lg);color:'+_pndAggColor+'">'+(_pndAgg==null?'-':_pndAgg+'%')+'</td>';
-        /* Uniform cell structure: every variant renders a fixed-height value line
-           plus a fixed-height action line (invisible spacer when no button), so the
-           percentage values line up across empty / away / scored cells. */
-        var _pndValLine = 'height:20px;line-height:20px;font-weight:700;font-size:var(--fz-body)';
-        var _pndActLine = 'height:20px;margin-top:2px;display:flex;align-items:center;justify-content:center';
         activeIdxs.forEach(function(_wi){
           var _iso = _pndWeekIsos[_wi];  // weekRanges has no sentinel; index maps 1:1
           var _rec = _iso ? _pndHuddles[_pndScReportId+'__'+_iso] : null;
           var _away = _rec && _rec.away;
           if(!_rec){
-            h+='<td style="text-align:center;padding:10px 6px;border-top:2px solid var(--brd);border-right:0.5px solid var(--brd);background:var(--sur2);vertical-align:top">'+
-                 '<div style="'+_pndValLine+';color:var(--txd)">-</div>'+
-                 '<div style="'+_pndActLine+'"><button type="button" onclick="pndToggleAway(\''+_iso+'\')" title="No data this week - mark Away to exclude it from the score" style="padding:1px 6px;border:1px solid transparent;background:transparent;color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit;opacity:.6" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--brd)\';this.style.background=\'var(--sur)\'" onmouseout="this.style.opacity=.6;this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">Mark Away</button></div>'+
-               '</td>';
+            h+='<td style="text-align:center;padding:14px 6px;color:var(--txd);font-size:var(--fz-body);border-top:2px solid var(--brd);border-right:0.5px solid var(--brd);background:var(--sur2)">-</td>';
             return;
           }
           // Away: show AWAY, no score, offer Unmark toggle
           if(_away){
-            h+='<td style="text-align:center;padding:10px 6px;background:var(--sur2);border-top:2px solid var(--brd);border-right:0.5px solid var(--brd);vertical-align:top">'+
-                 '<div style="'+_pndValLine+';color:var(--txd);text-transform:uppercase;letter-spacing:.04em;font-size:var(--fz-sm)">Away</div>'+
-                 '<div style="'+_pndActLine+'"><button type="button" onclick="pndToggleAway(\''+_iso+'\')" title="This week counts again" style="padding:1px 6px;border:1px solid var(--brd);background:var(--sur);color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit">Unmark</button></div>'+
+            h+='<td style="text-align:center;padding:10px 6px;background:var(--sur2);border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)">'+
+                 '<div style="color:var(--txd);font-size:var(--fz-sm);font-weight:700;text-transform:uppercase;letter-spacing:.04em">Away</div>'+
+                 '<button type="button" onclick="pndToggleAway(\''+_iso+'\')" title="This week counts again" style="margin-top:3px;padding:1px 6px;border:1px solid var(--brd);background:var(--sur);color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit">Unmark</button>'+
                '</td>';
             return;
           }
@@ -6149,9 +4744,9 @@ function renderScorecard(){
           var _pct = _hardFail ? 0 : _raw;
           var _c = _hardFail ? '#dc2626' : (_pct>=90 ? '#16a34a' : (_pct>=75 ? '#d97706' : '#dc2626'));
           var _bg = _hardFail ? '#fee2e2' : (_pct>=90 ? '#d1fae5' : (_pct>=75 ? '#fef3c7' : '#fee2e2'));
-          h+='<td title="Yes '+_yes+' / '+_total+(_hardFail?' - hard fail':'')+'" style="text-align:center;padding:10px 6px;background:'+_bg+';border-top:2px solid var(--brd);border-right:0.5px solid var(--brd);vertical-align:top">'+
-               '<div style="'+_pndValLine+';color:'+_c+'">'+_pct+'%</div>'+
-               '<div style="'+_pndActLine+'"><button type="button" onclick="pndToggleAway(\''+_iso+'\')" title="Holiday, sick, etc - excludes this week" style="padding:1px 6px;border:1px solid transparent;background:transparent;color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit;opacity:.6" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--brd)\';this.style.background=\'var(--sur)\'" onmouseout="this.style.opacity=.6;this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">Mark Away</button></div>'+
+          h+='<td title="Yes '+_yes+' / '+_total+(_hardFail?' - hard fail':'')+'" style="text-align:center;padding:10px 6px;background:'+_bg+';border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)">'+
+               '<div style="font-weight:700;color:'+_c+';font-size:var(--fz-body)">'+_pct+'%</div>'+
+               '<button type="button" onclick="pndToggleAway(\''+_iso+'\')" title="Holiday, sick, etc - excludes this week" style="margin-top:3px;padding:1px 6px;border:1px solid transparent;background:transparent;color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit;opacity:.6" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--brd)\';this.style.background=\'var(--sur)\'" onmouseout="this.style.opacity=.6;this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">Mark Away</button>'+
              '</td>';
         });
         h+='</tr>';
@@ -8562,320 +7157,5 @@ function _pndTile(label, val, valColor, bg){
 }
 
 </script>
-<!-- ============================================================
-     SMB P&D STAGING ADAPTER v2  (2026-07-13)
-     Built line-for-line on the WORKING VSP Staging Adapter v2.1 model
-     (verified against the deployed VSP index.html), extended from VSP's
-     single data key to P&D's seven shared keys.
-
-     SIMPLE, SAFE MODEL (v2.1 semantics; replaces the v1 polling model):
-       1. ON LOAD: pull the team's latest data from the cloud ONCE and show it.
-       2. AS YOU WORK: each save is sent up to the cloud (debounced).
-       3. TO SEE TEAMMATES' CHANGES: tap the badge to refresh on demand.
-     There is NO background auto-refresh. The old model re-rendered the page
-     every few seconds, which erased data while it was being typed. Removing
-     it fixes that completely.
-
-     DEPLOY SAFETY (from VSP v2.1): the file can NEVER overwrite non-empty
-     server data. The server is treated as empty ONLY when it literally is;
-     data in any other shape is adopted, not overwritten. If the server holds
-     a different PD_STORAGE_VERSION than this build, the adapter refuses to
-     load OR push and shows a warning, so team data stays safe in the cloud
-     until a matching build opens it. Nothing is pushed until the load-time
-     pull has reconciled.
-
-     Cloud shape at pd/lida-001/data:
-       { __v: PD_STORAGE_VERSION, keys: { <storageKey>: <rawString>, ... } }
-
-     Shared keys (team data - synced):
-       smb_perf_huddles_v1, smb_perf_quarterly_v1, smb_perf_annual_v1,
-       smb_perf_role_standards_v1, smb_perf_role_order_v1,
-       smb_pnd_cadence_v1, smb_pnd_review_dates_v1
-     Personal (NOT synced): smb_pnd_tours_seen_v1, device id.
-
-     This block is STAGING ONLY. Not part of the shipped module; does not go
-     through the audit. Delete this script block to return to pure local.
-     ============================================================ -->
-<script>
-/* SMB P&D STAGING ADAPTER v2 - shared cloud persistence over Firebase RTDB. */
-(function(){
-  var FB_URL  = 'https://smb-staging-666a3-default-rtdb.firebaseio.com';
-  var FB_PATH = 'pd/lida-001/data';   // shared node, one per tenant
-  var ENDPOINT = FB_URL.replace(/\/+$/,'') + '/' + FB_PATH + '.json';
-  var REST = 'Synced - tap to refresh';
-
-  var KEYS = [
-    'smb_perf_huddles_v1',
-    'smb_perf_quarterly_v1',
-    'smb_perf_annual_v1',
-    'smb_perf_role_standards_v1',
-    'smb_perf_role_order_v1',
-    'smb_pnd_cadence_v1',
-    'smb_pnd_review_dates_v1'
-  ];
-
-  function myVersion(){
-    try { return (typeof PD_STORAGE_VERSION !== 'undefined') ? PD_STORAGE_VERSION : 1; }
-    catch(e){ return 1; }
-  }
-
-  /* Snapshot the current local shared keys as the cloud payload object. */
-  function localSnapshot(){
-    var keys = {};
-    KEYS.forEach(function(k){
-      try { var v = localStorage.getItem(k); if(v != null) keys[k] = v; } catch(e){}
-    });
-    return { __v: myVersion(), keys: keys };
-  }
-  /* Content signature: a stable string over the shared keys only. */
-  function sigOf(snap){
-    if(!snap || !snap.keys) return 'empty';
-    var parts = [];
-    KEYS.forEach(function(k){ parts.push(k + '=' + (snap.keys[k] == null ? '' : snap.keys[k])); });
-    return parts.join('\u0001');
-  }
-
-  var lastSyncedSig = null;  // signature last known to match the cloud
-  var pendingPush = false;   // a local change not yet confirmed pushed - it wins
-  var pushTimer = null;
-  var pulling = false;
-  var lastInputTs = 0;       // last keystroke - protects a manual refresh
-  var ready = false;         // true only after the load-time pull; no push before then
-
-  function setBadge(kind, text){
-    var el = document.getElementById('smb-stage-badge');
-    if(!el) return;
-    var dot = el.querySelector('.smb-stage-dot');
-    var lbl = el.querySelector('.smb-stage-lbl');
-    var col = kind === 'ok' ? 'rgba(46,160,67,1)'
-            : kind === 'sync' ? 'rgba(240,180,40,1)'
-            : 'rgba(200,60,60,1)';
-    if(dot) dot.style.background = col;
-    if(lbl && text) lbl.textContent = text;
-  }
-  function rest(){ setBadge('ok', REST); }
-  function flash(kind, text, back){
-    setBadge(kind, text);
-    setTimeout(function(){ rest(); }, back || 1500);
-  }
-
-  /* Adopt a cloud snapshot into localStorage and re-render in place.
-     Preserves the page the user is on (state is untouched; only data keys move). */
-  var origSet = null;  // bound original setItem, assigned below before interception
-  function applySnapshot(snap){
-    KEYS.forEach(function(k){
-      var v = snap.keys ? snap.keys[k] : null;
-      if(v == null) return;                 // cloud lacks this key - keep local
-      try { origSet(k, v); } catch(e){}
-    });
-    try { if(typeof renderPage === 'function') renderPage(); } catch(e){}
-    try { if(typeof emitPndSignals === 'function') emitPndSignals(); } catch(e){}
-  }
-
-  /* Send the local shared keys up to the shared store. */
-  function pushUp(){
-    if(typeof fetch !== 'function') return;
-    var snap = localSnapshot();
-    var sig = sigOf(snap);
-    setBadge('sync', 'Saving...');
-    fetch(ENDPOINT, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(snap)
-    }).then(function(){
-      lastSyncedSig = sig;
-      pendingPush = false;
-      flash('ok', 'Saved', 1200);
-    }).catch(function(){
-      setBadge('off', 'Offline - will retry on next save');
-    });
-  }
-
-  /* True while the user is mid-entry, so a manual refresh will not wipe it. */
-  function isEditing(){
-    try{
-      var ae = document.activeElement;
-      if(ae){
-        var tag = (ae.tagName || '').toUpperCase();
-        if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-        if(ae.isContentEditable) return true;
-      }
-    }catch(e){}
-    if(Date.now() - lastInputTs < 4000) return true;
-    try{
-      if(typeof state !== 'undefined' && state){
-        if(state.historyOpen || state.qMoreOpen) return true;
-      }
-    }catch(e){}
-    return false;
-  }
-
-  /* Pull the shared value once and reconcile with what this browser has. */
-  function pull(){
-    if(typeof fetch !== 'function') return;
-    if(pulling) return;
-    pulling = true;
-    fetch(ENDPOINT, { cache: 'no-store' }).then(function(r){
-      return r.text();
-    }).then(function(txt){
-      pulling = false;
-
-      /* Decide what the server holds. CRITICAL: only treat the server as empty
-         when it literally is. Anything else is data we must not overwrite. */
-      var serverEmpty = (txt == null || txt === '' || txt === 'null');
-      var remote = null, unreadable = false;
-      if(!serverEmpty){
-        try {
-          var parsed = JSON.parse(txt);
-          if(parsed && typeof parsed === 'object' && parsed.keys && typeof parsed.keys === 'object') remote = parsed;
-          else if(parsed && typeof parsed === 'object'){
-            /* v1-adapter migration: the first deployed build wrote per-key
-               children shaped { <storageKey>: {v, at, by} }. Recognize that
-               shape strictly (every own property is one of our keys and
-               carries a string .v) and convert it; anything else stays
-               unreadable and untouched. */
-            var props = Object.keys(parsed);
-            var isV1 = props.length > 0 && props.every(function(k){
-              return KEYS.indexOf(k) !== -1 && parsed[k] && typeof parsed[k].v === 'string';
-            });
-            if(isV1){
-              var mig = {};
-              props.forEach(function(k){ mig[k] = parsed[k].v; });
-              remote = { __v: myVersion(), keys: mig, __migratedFromV1: true };
-            } else unreadable = true;
-          }
-          else unreadable = true;
-        } catch(e){ unreadable = true; }
-      }
-
-      if(unreadable){
-        /* Server has data in an unexpected shape. Do NOT overwrite it. Stay
-           receive-only so a later build / refresh can recover it. */
-        ready = false;
-        setBadge('off', 'Server data not recognized - not overwriting. Tap to retry');
-        return;
-      }
-
-      if(!serverEmpty){
-        /* Refuse cross-version load or push, keeping the server data safe. */
-        var remoteVer = (remote.__v != null) ? remote.__v : null;
-        var mv = myVersion();
-        if(remoteVer != null && String(remoteVer) !== String(mv)){
-          ready = false;
-          setBadge('off', 'Server data v' + remoteVer + ' differs from app v' + mv + ' - not loading/overwriting');
-          return;
-        }
-      }
-
-      if(serverEmpty){
-        /* Genuinely empty. Seed from this browser so the team has a baseline
-           (only pushes keys that exist locally; a fresh browser pushes nothing). */
-        var snap = localSnapshot();
-        if(Object.keys(snap.keys).length){ ready = true; pushUp(); }
-        else { ready = true; rest(); }
-        return;
-      }
-
-      /* A local change is queued or unconfirmed - it wins. Push it, do not adopt. */
-      if(pendingPush){
-        if(!pushTimer){ pushUp(); }
-        ready = true; rest();
-        return;
-      }
-      var remoteSig = sigOf(remote);
-      var localSig  = sigOf(localSnapshot());
-      if(remoteSig === lastSyncedSig){ ready = true; flash('ok', 'Up to date', 1200); return; }
-      if(remoteSig === localSig){ lastSyncedSig = remoteSig; ready = true; flash('ok', 'Up to date', 1200); return; }
-
-      /* Cloud has data this browser does not. Adopt it (only on the load-time
-         pull or when the user taps refresh while not mid-entry). */
-      lastSyncedSig = remoteSig;
-      applySnapshot(remote);
-      ready = true;
-      if(remote.__migratedFromV1){
-        /* Upgrade the cloud node to the v2 shape so every other browser reads it. */
-        pushUp();
-        flash('ok', 'Loaded team data (upgraded)', 1500);
-      } else {
-        flash('ok', 'Loaded team data', 1500);
-      }
-    }).catch(function(){
-      pulling = false;
-      setBadge('off', 'Offline - tap to retry');
-    });
-  }
-
-  /* Intercept saves: when the module writes a shared key, send the set up.
-     Other keys (tours seen, device id) stay browser-local. */
-  origSet = localStorage.setItem.bind(localStorage);
-  localStorage.setItem = function(k, v){
-    origSet(k, v);
-    if(KEYS.indexOf(k) === -1) return;
-    /* Do not push anything until the load-time pull has brought in the team's
-       data. A fresh page pushing before adopting the cloud copy is exactly
-       what used to erase the team's data on deploy. */
-    if(!ready) return;
-    /* If nothing shared actually changed, there is nothing to send. */
-    if(sigOf(localSnapshot()) === lastSyncedSig) return;
-    pendingPush = true;
-    if(pushTimer) clearTimeout(pushTimer);
-    pushTimer = setTimeout(function(){ pushTimer = null; pushUp(); }, 600);
-  };
-
-  /* Tap the badge to pull teammates' latest. Protected so it cannot wipe an
-     entry in progress. */
-  function manualRefresh(){
-    if(!ready){ pull(); return; }
-    if(isEditing()){ flash('sync', 'Finish your entry, then tap', 2000); return; }
-    setBadge('sync', 'Checking for updates...');
-    pull();
-  }
-
-  function mountBadge(){
-    if(document.getElementById('smb-stage-badge')) return;
-    var b = document.createElement('div');
-    b.id = 'smb-stage-badge';
-    b.setAttribute('title', 'Staging: your saves go to the shared cloud. Tap to load your team\'s latest.');
-    b.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:99999;'
-      + 'display:flex;align-items:center;gap:7px;'
-      + 'background:rgba(20,28,46,.92);color:#fff;'
-      + 'font:600 12px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
-      + 'padding:8px 11px;border-radius:999px;'
-      + 'box-shadow:0 2px 10px rgba(0,0,0,.25);cursor:pointer;user-select:none;';
-    b.innerHTML = '<span class="smb-stage-dot" style="width:9px;height:9px;'
-      + 'border-radius:50%;background:rgba(240,180,40,1);'
-      + 'box-shadow:0 0 0 3px rgba(255,255,255,.12)"></span>'
-      + '<span class="smb-stage-lbl">Connecting...</span>';
-    /* Pin bottom-LEFT past the 240px sidebar on desktop, edge on mobile -
-       same placement as the working VSP build. */
-    if(!document.getElementById('smb-stage-badge-css')){
-      var st = document.createElement('style');
-      st.id = 'smb-stage-badge-css';
-      st.textContent = '#smb-stage-badge{left:256px !important;right:auto !important;bottom:14px !important;}'
-        + '@media (max-width:768px){#smb-stage-badge{left:14px !important;}}';
-      (document.head||document.documentElement).appendChild(st);
-    }
-    b.addEventListener('click', manualRefresh);
-    document.body.appendChild(b);
-  }
-
-  function start(){
-    mountBadge();
-    try{
-      document.addEventListener('keydown', function(){ lastInputTs = Date.now(); }, true);
-      document.addEventListener('input',   function(){ lastInputTs = Date.now(); }, true);
-    }catch(e){}
-    if(typeof fetch !== 'function'){ setBadge('off', 'Sync unsupported here'); return; }
-    pull();   // one-time reconcile with the cloud on load. No background polling.
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
-  }
-})();
-</script>
-
 </body>
 </html>
