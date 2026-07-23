@@ -1883,12 +1883,37 @@ function complianceBreakdownForWeek(groupId, weekIso){
   });
   return out;
 }
+/* True when this person still owes an answer for the week: they are in scope
+   (tracked, has a standard for their role, not away) but their week has not
+   closed and holds nothing yet. This is NOT the same as being out of scope.
+   _pndPersonWeekPct returns null for both cases, and treating them alike is
+   what let a group publish while a member's week was still open, dropping that
+   member from the average and from the breakdown. */
+function _pndPersonWeekOutstanding(personId, weekIso){
+  try{
+    var person = personById(personId);
+    if(!person) return false;
+    if(!isWeekTracked(personId, weekIso)) return false;         /* not started: out of scope */
+    var std = standardFor(person, weekIso);
+    if(std && std.rotates){
+      try{ std = ROLE_STANDARDS[person.roleLabel].weeks[activePhaseFor(person, weekIso)-1].items; }catch(e){ std = null; }
+    }
+    if(!std || !std.length) return false;                       /* no scorecard: out of scope */
+    var rec = ((typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {})[personId+'__'+weekIso];
+    if(rec && rec.away) return false;                            /* away: deliberately excluded */
+    return _pndWeekPending(personId, weekIso, rec);              /* open and unanswered */
+  }catch(e){ return false; }
+}
 function complianceWeekFinal(groupId, weekIso){
   var g = pndComplianceGroups()[groupId];
   if(!g || !weekIso) return false;
   var any = false, allLocked = true;
   g.members.forEach(function(pid){
-    if(_pndPersonWeekPct(pid, weekIso) === null) return;      /* out of scope */
+    /* Someone whose week is still open holds the whole group open. Publishing
+       without them would report an average computed from a subset, which reads
+       as a real number but is not the one the group will end up with. */
+    if(_pndPersonWeekOutstanding(pid, weekIso)){ allLocked = false; any = true; return; }
+    if(_pndPersonWeekPct(pid, weekIso) === null) return;      /* genuinely out of scope */
     any = true;
     if(!isWeekLocked(pid, weekIso)) allLocked = false;
   });
