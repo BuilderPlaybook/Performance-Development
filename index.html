@@ -1691,6 +1691,18 @@ function _pndFirstDataWeek(personId){
   var earliest = null, pfx = personId+'__';
   Object.keys(all).forEach(function(k){
     if(k.indexOf(pfx)!==0) return;
+    /* An empty shell is not data. Simply opening a week can leave a record with
+       no answers behind, and if those counted, tracking would begin months
+       before the person entered anything, scoring every blank week in between
+       as 0%. Only a real answer, or an explicit Away, starts the clock. */
+    var rec = all[k], hasAnswer = false;
+    if(rec && rec.answers){
+      for(var a in rec.answers){
+        var v = rec.answers[a];
+        if(v === 'yes' || v === 'no'){ hasAnswer = true; break; }
+      }
+    }
+    if(!hasAnswer && !(rec && rec.away)) return;
     var iso = k.slice(pfx.length);
     if(!earliest || iso < earliest) earliest = iso;
   });
@@ -1980,12 +1992,14 @@ function _pndBridgeBreakdown(val){
 }
 var PND_BRIDGE_WEEKS_BACK = 78;   /* 18 months, so a full backfill year is covered */
 /* Hard floor. Nothing before this week is ever published, whatever the data
-   says. VSP's columns before this point hold numbers that were entered by hand
-   over months, and a stray closed week from the pilot period must not be able
-   to overwrite them. The week of Jul 13 2026 is the first week LIDA ran the
-   scorecard in this module. Moving this forward is safe; moving it back means
-   deciding, deliberately, to let P&D write over VSP history. */
-var PND_BRIDGE_FIRST_WEEK = '2026-07-13';
+   says, so a stray record cannot reach back into the scorecard.
+   Set to the week of Jan 5 2026 on 2026-07-23, when LIDA finished backfilling
+   the year in P&D and Dave confirmed P&D is the record of truth. It previously
+   sat at Jul 13 2026, protecting VSP columns that had been filled in by hand.
+   Moving it forward is always safe. Moving it back is a decision to let P&D
+   compute over numbers a person typed, so it is made deliberately, not drifted
+   into. */
+var PND_BRIDGE_FIRST_WEEK = '2026-01-05';
 function _pndWriteComplianceBridge(){
   try{
     var groups = pndComplianceGroups();
@@ -2030,12 +2044,45 @@ function getRec(){
   var all = pdLoad('huddles', {});
   return all[recKey()] || blankRec();
 }
+/* True when a record holds nothing a person put there. Several handlers save
+   on touch (cadence, phase, discussed, conversation notes), so simply moving
+   through weeks could leave blank records behind. Those are invisible in the
+   UI but they are still records, and anything that reasons about "the first
+   week this person was tracked" would count them. Nothing empty gets stored. */
+function _pndRecIsEmpty(rec){
+  if(!rec) return true;
+  if(rec.away) return false;
+  if(rec.discussed) return false;
+  if(rec.phaseOverride) return false;
+  var a = rec.answers || {};
+  for(var k in a){ if(a[k]==='yes' || a[k]==='no') return false; }
+  var c = rec.conv || {};
+  if((c.doing && String(c.doing).trim()) || (c.support && String(c.support).trim())) return false;
+  var g = rec.goals || [];
+  for(var i=0;i<g.length;i++){
+    var x = g[i] || {};
+    if((x.job||x.lastDone||x.lastNote||x.thisDone||x.thisNote||'').toString().trim()) return false;
+  }
+  var d = rec.discuss || [];
+  for(var j=0;j<d.length;j++){
+    var y = d[j];
+    if(y && (typeof y === 'string' ? y.trim() : (y.text||y.note||'').toString().trim())) return false;
+  }
+  return true;
+}
 function putRec(rec){
   _pndInvalidateTrackingCache();
   /* Weekly Scorecard Lock v1: refuse writes to a locked week unless admin. */
   if(!canEditWeek(state.reportId, state.weekIso)){ _pndLockRefuse(state.reportId, state.weekIso); return false; }
   _pndStampLockEdit(rec, state.reportId, state.weekIso);
   var all = pdLoad('huddles', {});
+  /* Do not create a record for a week nobody has actually put anything in.
+     If one already exists and has just been emptied, drop it rather than
+     leaving a blank shell behind. */
+  if(_pndRecIsEmpty(rec)){
+    if(all[recKey()]){ delete all[recKey()]; pdSave('huddles', all); emitPndSignals(); }
+    return true;
+  }
   rec.savedAt = new Date().toISOString();
   all[recKey()] = rec;
   pdSave('huddles', all);
