@@ -985,7 +985,8 @@ summary:focus-visible,
 .modal-h{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
 .modal-b{padding:18px;overflow-y:auto}
 .modal-x{background:none;border:none;font-size:var(--fz-xl);color:var(--txm);cursor:pointer;line-height:1}
-.cg-modal{max-width:720px}
+.cg-modal{max-width:720px;max-height:86vh;display:flex;flex-direction:column}
+.cg-modal .modal-b{overflow-y:auto;flex:1 1 auto;min-height:0}
 .cg-grp{border:1px solid var(--brd);border-radius:var(--r-card);padding:14px 16px;margin-bottom:16px}
 .cg-hd{display:flex;align-items:baseline;gap:10px}
 .cg-lbl{font-size:var(--fz-lg);font-weight:700;color:var(--txt)}
@@ -1293,59 +1294,25 @@ ROLE_STANDARDS['Client Experience & Interior Design Manager'] = [
   {id:'cx9',  sec:'Client & Stakeholder Experience',                hard:false, std:'All active client messages responded to within 24 hours.', due:'No exceptions.'},
   {id:'cx10', sec:'Leadership, Accountability & Risk Management',   hard:false, std:'Any unhappy client issue, brand concern, or issue risking cost/schedule escalated to Sr. PM and VP (and PM if needed).', due:'Immediately when discovered.'}
 ];
-ROLE_STANDARDS['Accounting Administrator'] = {
-  rotates: 'weekOfMonth',
-  weeks: [
-    { title:'Week 1 - Month Close & Financial Foundation', items:[
-      {id:'aa1_1',  sec:'Admin & Time Discipline', hard:false, std:'Time clock complete and correct.', due:'Every day, by 9:00am next day.'},
-      {id:'aa1_2',  sec:'Invoicing Processing',    hard:false, std:'All supplier invoices entered, cost-coded, and filed.', due:'Friday by 6:00pm.'},
-      {id:'aa1_3',  sec:'Client Invoicing',        hard:false, std:'All client invoices generated and sent.', due:'Friday by 6:00pm.'},
-      {id:'aa1_4',  sec:'Receivables',             hard:false, std:'A/R report updated and sent to VP.', due:'Friday by 12:00pm.'},
-      {id:'aa1_5',  sec:'Payables',                hard:false, std:'A/P report updated and sent to VP.', due:'Friday by 12:00pm.'},
-      {id:'aa1_6',  sec:'Reconciliation',          hard:false, std:'All bank and credit card accounts reconciled.', due:'Friday by 6:00pm.'},
-      {id:'aa1_7',  sec:'Expenses',                hard:false, std:'All staff expenses & receipts entered and filed.', due:'Friday by 6:00pm.'},
-      {id:'aa1_8',  sec:'Month-End Close',         hard:false, std:'Prior month fully closed in accounting system.', due:'By the 7th or Friday.'},
-      {id:'aa1_9',  sec:'Reporting',               hard:false, std:'Prior month financial package prepared for VP/President.', due:'By the 10th or Friday.'},
-      {id:'aa1_10', sec:'System Hygiene',          hard:false, std:'All documents filed, named correctly, and organized.', due:'Friday by 6:00pm.'}
-    ]},
-    { title:'Week 2 - Payroll & Billing Cycle', items:[
-      {id:'aa2_1',  sec:'Admin & Time Discipline', hard:false, std:'Time clock complete and correct.', due:'Every day, by 9:00am next day.'},
-      {id:'aa2_2',  sec:'Payroll',                 hard:false, std:'Payroll prepared, reviewed, and submitted.', due:'By payroll deadline.'},
-      {id:'aa2_3',  sec:'Invoicing',               hard:false, std:'All new client invoices generated and sent.', due:'Friday by 6:00pm.'},
-      {id:'aa2_4',  sec:'Cost Coding',             hard:false, std:'All bills and expenses cost-coded and filed.', due:'Friday by 6:00pm.'},
-      {id:'aa2_5',  sec:'Receivables',             hard:false, std:'A/R follow-ups sent and notes updated.', due:'Friday by 6:00pm.'},
-      {id:'aa2_6',  sec:'Payables',                hard:false, std:'All new bills entered and queued for approval.', due:'Friday by 6:00pm.'},
-      {id:'aa2_7',  sec:'Expenses',                hard:false, std:'All expense reports processed.', due:'Friday by 6:00pm.'},
-      {id:'aa2_8',  sec:'Filing',                  hard:false, std:'All accounting documents filed and organized.', due:'Friday by 6:00pm.'},
-      {id:'aa2_9',  sec:'Data Hygiene',            hard:false, std:'No unfiled or uncoded transactions left in system.', due:'Friday by 6:00pm.'},
-      {id:'aa2_10', sec:'Communication',           hard:false, std:'Any accounting issues flagged to VP.', due:'Immediately.'}
-    ]},
-    { title:'Week 3 - Controls & Reconciliation', items:[
-      {id:'aa3_1',  sec:'Admin & Time Discipline', hard:false, std:'Time clock complete and correct.', due:'Every day, by 9:00am next day.'},
-      {id:'aa3_2',  sec:'Reconciliation',          hard:false, std:'Mid-month bank and credit card reconciliation completed.', due:'Friday by 6:00pm.'},
-      {id:'aa3_3',  sec:'Invoicing',               hard:false, std:'All client invoices generated and sent.', due:'Friday by 6:00pm.'},
-      {id:'aa3_4',  sec:'Cost Coding',             hard:false, std:'All bills and expenses fully cost-coded.', due:'Friday by 6:00pm.'},
-      {id:'aa3_5',  sec:'Receivables',             hard:false, std:'A/R report updated and sent to VP.', due:'Friday by 12:00pm.'},
-      {id:'aa3_6',  sec:'Payables',                hard:false, std:'A/P report updated and sent to VP.', due:'Friday by 12:00pm.'},
-      {id:'aa3_7',  sec:'Expenses',                hard:false, std:'All expense reports processed.', due:'Friday by 6:00pm.'},
-      {id:'aa3_8',  sec:'Filing',                  hard:false, std:'All accounting documents filed and organized.', due:'Friday by 6:00pm.'},
-      {id:'aa3_9',  sec:'System Check',            hard:false, std:'No unreconciled or uncoded items in system.', due:'Friday by 6:00pm.'},
-      {id:'aa3_10', sec:'Communication',           hard:false, std:'Any risks or issues flagged to VP.', due:'Immediately.'}
-    ]},
-    { title:'Week 4 - Pre-Close & Reset', items:[
-      {id:'aa4_1',  sec:'Admin & Time Discipline', hard:false, std:'Time clock complete and correct.', due:'Every day, by 9:00am next day.'},
-      {id:'aa4_2',  sec:'Invoicing',               hard:false, std:'All client invoices generated and sent.', due:'Friday by 6:00pm.'},
-      {id:'aa4_3',  sec:'Cost Coding',             hard:false, std:'All bills and expenses fully entered and cost-coded.', due:'Friday by 6:00pm.'},
-      {id:'aa4_4',  sec:'Receivables',             hard:false, std:'A/R report updated and sent to VP.', due:'Friday by 12:00pm.'},
-      {id:'aa4_5',  sec:'Payables',                hard:false, std:'A/P report updated and sent to VP.', due:'Friday by 12:00pm.'},
-      {id:'aa4_6',  sec:'Reconciliation',          hard:false, std:'Pre-close bank and credit card reconciliation completed.', due:'Friday by 6:00pm.'},
-      {id:'aa4_7',  sec:'Expenses',                hard:false, std:'All expense reports processed.', due:'Friday by 6:00pm.'},
-      {id:'aa4_8',  sec:'Cleanup',                 hard:false, std:'No backlog items left in accounting system.', due:'Friday by 6:00pm.'},
-      {id:'aa4_9',  sec:'Pre-Close Check',         hard:false, std:'All accounts ready for month-end close.', due:'Friday by 6:00pm.'},
-      {id:'aa4_10', sec:'Handoff',                 hard:false, std:'Month-end close checklist prepared for next Week 1.', due:'Friday by 6:00pm.'}
-    ]}
-  ]
-};
+ROLE_STANDARDS['Accounting Administrator'] = [
+  /* Fixed weekly card, replacing the four rotating weekOfMonth phases
+     (decided 2026-07-23). Seven of the ten phase rows were identical every
+     week; the month-anchored work (payroll, mid-month rec, pre-close rec,
+     month-end close) collapses into row aa2 against the accounting calendar.
+     This removes the fifth-week problem entirely: no phases, nothing to clamp.
+     A/R and A/P reports move from three-per-month to weekly per Dave.
+     No migration needed: Venessa had zero recorded weeks at the switch. */
+  {id:'aa1', sec:'Admin & Time Discipline',      hard:true,  std:'Time clock complete and correct.', due:'Every day, by 9:00am next day.'},
+  {id:'aa2', sec:'Accounting Cycle',             hard:true,  std:'This week\'s scheduled cycle tasks completed on time (payroll, mid-month reconciliation, pre-close reconciliation, or month-end close, per the accounting calendar).', due:'Per the accounting calendar.'},
+  {id:'aa3', sec:'Invoicing Processing',         hard:false, std:'All client invoices generated and sent.', due:'Friday by 6:00pm.'},
+  {id:'aa4', sec:'Invoicing Processing',         hard:false, std:'All bills and expenses entered, cost-coded, and filed.', due:'Friday by 6:00pm.'},
+  {id:'aa5', sec:'Reporting',                    hard:false, std:'A/R report updated and sent to VP.', due:'Friday by 6:00pm.'},
+  {id:'aa6', sec:'Reporting',                    hard:false, std:'A/P report updated and sent to VP.', due:'Friday by 6:00pm.'},
+  {id:'aa7', sec:'Invoicing Processing',         hard:false, std:'All expense reports processed.', due:'Friday by 6:00pm.'},
+  {id:'aa8', sec:'Systems & Administrative Discipline', hard:false, std:'All accounting documents filed, named correctly, and organized.', due:'Friday by 6:00pm.'},
+  {id:'aa9', sec:'Systems & Administrative Discipline', hard:false, std:'No unfiled, uncoded, or unreconciled items left in the system.', due:'Friday by 6:00pm.'},
+  {id:'aa10',sec:'Leadership & Escalation',      hard:false, std:'Any risks or issues flagged to VP.', due:'Immediately when discovered.'}
+];
 
 /* ============================================================
    MEETING CADENCE (per-role) - D-97
@@ -5963,7 +5930,6 @@ function _pndRepaintComplianceGroups(){
   if(host) host.innerHTML = _pndComplianceGroupsBody();
 }
 function _pndComplianceGroupsBody(){
-  try{ _pndWriteComplianceBridge(); }catch(e){}   /* refresh before reading it back */
   var groups = pndComplianceGroups();
   var wk = isoDate(mondayOf(new Date()));
   var roster = people().filter(function(p){ return p.status === 'active'; });
@@ -5992,14 +5958,24 @@ function _pndComplianceGroupsBody(){
     /* What has actually closed and is queued for VSP. Reads the same bridge
        object VSP will read, so this is the real answer rather than a restatement
        of the rule. */
+    /* Computed in memory. This used to rewrite the bridge and read it back,
+       which wrote localStorage on every repaint and set the sync adapter
+       pushing on every checkbox tick. Reading is free; writing is not. */
     var queued = '';
     try{
-      var bridge = JSON.parse(localStorage.getItem(PND_BRIDGE_KEY)||'null');
-      var wks = (bridge && bridge.groups && bridge.groups[gid] && bridge.groups[gid].weeks) || {};
+      var wks = {}, d = mondayOf(new Date());
+      for(var _k=0; _k<8; _k++){
+        var _iso = isoDate(d);
+        if(_iso >= PND_BRIDGE_FIRST_WEEK && complianceWeekFinal(gid, _iso)){
+          var _v = complianceForWeek(gid, _iso);
+          if(_v !== null) wks[_iso] = _v;
+        }
+        d = _pndPrevWeek(d);
+      }
       var keys = Object.keys(wks).sort().reverse().slice(0,6);
       queued = keys.length
         ? 'Closed and ready for VSP: '+keys.map(function(k){
-            return _pndFormatDateShort(k)+' '+_pndBridgeTotal(wks[k])+'%';
+            return _pndFormatDateShort(k)+' '+wks[k]+'%';
           }).join(' &middot; ')+
           '<br><span style="color:var(--txm)">Nothing before the week of '+_pndFormatDateShort(PND_BRIDGE_FIRST_WEEK)+' is ever sent. Earlier VSP columns stay as entered.</span>'
         : 'Closed and ready for VSP: nothing yet. No week has closed for everyone in this group.';
@@ -9153,6 +9129,28 @@ function _pndBuildScorecardData(person, std, weeksOverride){
      subsequent edits mutate it. */
   var persistedStd = _pndLoadRoleStandards()[roleKey];
   var effectiveStd = (Array.isArray(persistedStd) && persistedStd.length) ? persistedStd : std;
+
+  /* Seed-persist: other modules read smb_perf_role_standards_v1 and cannot see
+     the in-code ROLE_STANDARDS table, so on a browser where no admin has ever
+     edited a standard the key is empty and consumers (VSP's Weekly Performance
+     Huddle) render nothing. Write the effective list once so the key exists,
+     then leave it alone: later admin edits own it exactly as they do today.
+     Rotating roles are skipped deliberately. The persisted copy is preferred
+     over the seed on every later build, so freezing one phase's rows under the
+     role key would render that phase every week and silently break rotation.
+     No role rotates today; if one returns, its consumer story needs designing,
+     not this shortcut. */
+  try{
+    if(!isRotatingRole(person)){
+      var _rsMap = _pndLoadRoleStandards();
+      if(!Array.isArray(_rsMap[roleKey]) || !_rsMap[roleKey].length){
+        _rsMap[roleKey] = effectiveStd.map(function(r){
+          return { id:r.id, sec:r.sec, hard:!!r.hard, std:r.std, due:r.due };
+        });
+        _pndSaveRoleStandards(_rsMap);
+      }
+    }
+  }catch(e){}
 
   var stdOrdered = effectiveStd.slice();
   if(Array.isArray(savedOrder) && savedOrder.length){
