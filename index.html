@@ -1875,11 +1875,20 @@ function complianceBreakdownForWeek(groupId, weekIso){
   var g = pndComplianceGroups()[groupId];
   if(!g || !weekIso) return [];
   var out = [];
+  var all = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
   g.members.forEach(function(pid){
-    var pct = _pndPersonWeekPct(pid, weekIso);
-    if(pct === null) return;                              /* excluded, same as the average */
     var person = personById(pid);
-    out.push({ name: person ? fullName(person) : pid, pct: Math.round(pct*100)/100 });
+    var nm = person ? fullName(person) : pid;
+    var rec = all[pid+'__'+weekIso];
+    /* Away members are listed with pct null and status 'away'. They are not in
+       the average, but leaving them out of the list entirely made the group
+       look smaller than it is and invited the question "where is that person".
+       Anyone genuinely out of scope (never started, no scorecard for their
+       role) is still omitted, since they were never part of this week. */
+    if(rec && rec.away){ out.push({ name: nm, pct: null, status: 'away' }); return; }
+    var pct = _pndPersonWeekPct(pid, weekIso);
+    if(pct === null) return;
+    out.push({ name: nm, pct: Math.round(pct*100)/100, status: 'counted' });
   });
   return out;
 }
