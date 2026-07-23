@@ -3572,7 +3572,7 @@ function renderRotatingHuddle(person){
   weeks.forEach(function(iso){
     var rec = all[person.id+'__'+iso];
     if(rec && rec.away){ weeksAway++; return; }
-    if(!isWeekTracked(personId, iso)) return;               /* before tracking started - not counted */
+    if(!isWeekTracked(person.id, iso)) return;               /* before tracking started - not counted */
     if(!rec){ weeklyPcts.push(0); return; }                 /* empty week counts as 0% */
     var phase = activePhaseFor(person, iso);
     var std = roleDef.weeks[phase-1].items;
