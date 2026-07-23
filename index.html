@@ -1853,6 +1853,24 @@ function complianceForWeek(groupId, weekIso){
    no standard) do not hold the week open, since they are not in the average.
    Tiered locks mean the division leads close a day after their people and the
    company lead a day after that, so a group is final on its slowest member. */
+/* Per-person contributions behind a group's combined number, in group member
+   order. Only people who actually counted appear: anyone _pndPersonWeekPct
+   excludes (away, not yet tracked, no standard for their role, week still open)
+   is absent here for the same reason they are absent from the average.
+   The combine rule is a simple mean of these pct values, so the tooltip can
+   state that and the numbers reconcile. */
+function complianceBreakdownForWeek(groupId, weekIso){
+  var g = pndComplianceGroups()[groupId];
+  if(!g || !weekIso) return [];
+  var out = [];
+  g.members.forEach(function(pid){
+    var pct = _pndPersonWeekPct(pid, weekIso);
+    if(pct === null) return;                              /* excluded, same as the average */
+    var person = personById(pid);
+    out.push({ name: person ? fullName(person) : pid, pct: Math.round(pct*100)/100 });
+  });
+  return out;
+}
 function complianceWeekFinal(groupId, weekIso){
   var g = pndComplianceGroups()[groupId];
   if(!g || !weekIso) return false;
@@ -1881,6 +1899,11 @@ window.SMB_PND_COMPLIANCE = {
   forWeek: function(groupId, weekIso){
     try{ return complianceWeekFinal(groupId, weekIso) ? complianceForWeek(groupId, weekIso) : null; }
     catch(e){ return null; }
+  },
+  /* Per-person contributions behind a closed week's number, or [] while open. */
+  breakdownForWeek: function(groupId, weekIso){
+    try{ return complianceWeekFinal(groupId, weekIso) ? complianceBreakdownForWeek(groupId, weekIso) : []; }
+    catch(e){ return []; }
   },
   /* Has this week closed for everyone in the group. */
   isFinal: function(groupId, weekIso){
@@ -1945,6 +1968,16 @@ function _pndPrevWeek(d){
   return n;
 }
 var PND_BRIDGE_KEY = 'smb_pnd_compliance_bridge_v1';
+/* A week's value is either a bare number (v1.0) or {total, breakdown} (v1.1).
+   Every reader goes through these two so both shapes stay readable. */
+function _pndBridgeTotal(val){
+  if(val === null || val === undefined) return null;
+  if(typeof val === 'number') return val;
+  return (typeof val.total === 'number') ? val.total : null;
+}
+function _pndBridgeBreakdown(val){
+  return (val && Array.isArray(val.breakdown)) ? val.breakdown : [];
+}
 var PND_BRIDGE_WEEKS_BACK = 78;   /* 18 months, so a full backfill year is covered */
 /* Hard floor. Nothing before this week is ever published, whatever the data
    says. VSP's columns before this point hold numbers that were entered by hand
@@ -1966,7 +1999,11 @@ function _pndWriteComplianceBridge(){
         if(iso < PND_BRIDGE_FIRST_WEEK) break;              /* never write over VSP history */
         if(complianceWeekFinal(gid, iso)){
           var v = complianceForWeek(gid, iso);
-          if(v !== null) weeks[iso] = v;
+          /* v1.1 shape: {total, breakdown[]}. Still under bridge v:1 because a
+             consumer reading the old bare number keeps working via _pndBridgeTotal.
+             breakdown carries the per-person numbers behind the average so VSP
+             can show them on hover. */
+          if(v !== null) weeks[iso] = { total: v, breakdown: complianceBreakdownForWeek(gid, iso) };
         }
         d = _pndPrevWeek(d);
       }
@@ -5881,7 +5918,7 @@ function _pndComplianceGroupsBody(){
       var keys = Object.keys(wks).sort().reverse().slice(0,6);
       queued = keys.length
         ? 'Closed and ready for VSP: '+keys.map(function(k){
-            return _pndFormatDateShort(k)+' '+wks[k]+'%';
+            return _pndFormatDateShort(k)+' '+_pndBridgeTotal(wks[k])+'%';
           }).join(' &middot; ')+
           '<br><span style="color:var(--txm)">Nothing before the week of '+_pndFormatDateShort(PND_BRIDGE_FIRST_WEEK)+' is ever sent. Earlier VSP columns stay as entered.</span>'
         : 'Closed and ready for VSP: nothing yet. No week has closed for everyone in this group.';
