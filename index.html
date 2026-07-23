@@ -1795,6 +1795,21 @@ function pndSetComplianceMembers(groupId, memberIds){
   try{ localStorage.setItem('smb_pnd_compliance_groups_v1', JSON.stringify(cur)); }catch(e){}
   try{ emitPndSignals(); }catch(e){}
 }
+/* A week with nothing entered that has not reached its lock deadline is still
+   OPEN, not missed. D-94 says a blank week counts 0%, and that stands, but only
+   once the week has closed. Scoring the current week at 0% before anyone could
+   reasonably have filled it in reports a failure that has not happened yet.
+   A partly filled week still scores, so progress is visible as it is entered. */
+function _pndWeekPending(personId, weekIso, rec){
+  try{
+    if(isWeekLocked(personId, weekIso)) return false;        /* closed: blank means 0 */
+    if(!rec) return true;
+    if(rec.away) return false;                                /* Away is a decision, not a gap */
+    var a = rec.answers || {};
+    for(var k in a){ if(a[k] === 'yes' || a[k] === 'no') return false; }
+    return true;                                              /* open and untouched */
+  }catch(e){ return false; }
+}
 /* One person's scored percentage for a week, or null when they are outside
    the average (not started, away, or no standard defined for the role). */
 function _pndPersonWeekPct(personId, weekIso){
@@ -1809,6 +1824,7 @@ function _pndPersonWeekPct(personId, weekIso){
   var all = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
   var rec = all[personId+'__'+weekIso];
   if(rec && rec.away) return null;                        /* away excluded */
+  if(_pndWeekPending(personId, weekIso, rec)) return null; /* still open: not a miss yet */
   if(!rec) return 0;                                      /* tracked but empty = 0% (D-94) */
   var yes=0, hard=false;
   std.forEach(function(row){
@@ -6765,7 +6781,8 @@ function renderScorecard(){
           if(_iso && !isWeekTracked(_pndScReportId, _iso)) return;
           var _rec = _iso ? _pndHuddles[_pndScReportId+'__'+_iso] : null;
           if(_rec && _rec.away) return;                     // Away weeks excluded entirely
-          if(!_rec){ _pndAggSum += 0; _pndAggCount++; return; }   // empty week counts as 0%
+          if(_iso && _pndWeekPending(_pndScReportId, _iso, _rec)) return;  // still open: not scored yet
+          if(!_rec){ _pndAggSum += 0; _pndAggCount++; return; }   // closed and empty counts as 0%
           var _y=0, _hf=false, _t=0;
           section.metrics.forEach(function(_mm){
             _t++;
@@ -6798,6 +6815,13 @@ function renderScorecard(){
           var _away = _rec && _rec.away;
           /* Before this person started being tracked: neutral, not scored,
              and no Away control - the week is simply outside the period. */
+          if(_iso && _pndWeekPending(_pndScReportId, _iso, _rec) && isWeekTracked(_pndScReportId, _iso)){
+            h+='<td style="text-align:center;padding:10px 6px;border-top:2px solid var(--brd);border-right:0.5px solid var(--brd);background:var(--sur2);vertical-align:top" title="Still open. Closes '+esc(_pndLockDeadlineLabel(_pndScReportId, _iso))+'.">'+
+                 '<div style="'+_pndValLine+';color:var(--txd)">-</div>'+
+                 '<div style="'+_pndActLine+'"><button type="button" onclick="pndToggleAway(\''+_iso+'\')" title="Holiday, sick, etc - excludes this week" style="padding:1px 6px;border:1px solid transparent;background:transparent;color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit;opacity:.6" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--brd)\';this.style.background=\'var(--sur)\'" onmouseout="this.style.opacity=.6;this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">Mark Away</button></div>'+
+               '</td>';
+            return;
+          }
           if(_iso && !isWeekTracked(_pndScReportId, _iso)){
             h+='<td style="text-align:center;padding:10px 6px;border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)" title="Before tracking started for this person">'+
                  '<div style="'+_pndValLine+';color:var(--txd)">&middot;</div>'+
@@ -9321,6 +9345,33 @@ function _pndTile(label, val, valColor, bg){
     catch(e){ return 1; }
   }
 
+  /* Keys whose value is a flat object of {recordId: record} and must be merged
+     record-by-record on push, so two people editing different records do not
+     overwrite each other. Everything else is last-write-wins on its whole value. */
+  var MERGE_KEYS = { 'smb_perf_huddles_v1': true };
+
+  function _parse(v){ try { return JSON.parse(v); } catch(e){ return null; } }
+  function _recTime(r){
+    try { return r && r.savedAt ? new Date(r.savedAt).getTime() : 0; }
+    catch(e){ return 0; }
+  }
+  /* Merge one huddles object (mine) into the server's, record by record.
+     A record present in both is resolved by savedAt: the newer save wins, so a
+     correction always beats the stale copy that produced it. Records only one
+     side has are kept. Returns the merged object. */
+  function mergeHuddles(serverObj, mineObj){
+    var out = {};
+    var k;
+    if(serverObj) for(k in serverObj){ if(serverObj.hasOwnProperty(k)) out[k] = serverObj[k]; }
+    if(mineObj) for(k in mineObj){
+      if(!mineObj.hasOwnProperty(k)) continue;
+      var mine = mineObj[k], theirs = out[k];
+      if(theirs === undefined){ out[k] = mine; continue; }
+      out[k] = (_recTime(mine) >= _recTime(theirs)) ? mine : theirs;
+    }
+    return out;
+  }
+
   /* Snapshot the current local shared keys as the cloud payload object. */
   function localSnapshot(){
     var keys = {};
@@ -9374,22 +9425,70 @@ function _pndTile(label, val, valColor, bg){
     try { if(typeof emitPndSignals === 'function') emitPndSignals(); } catch(e){}
   }
 
-  /* Send the local shared keys up to the shared store. */
-  function pushUp(){
+  /* Send local changes up, merging record-level keys against the server so a
+     concurrent editor is never clobbered. Read the current server copy, merge
+     my huddles into it, write the merged result back. On any read/parse
+     trouble, fall back to a straight PUT of my snapshot rather than losing the
+     save. Retries once on a race. */
+  function pushUp(attempt){
     if(typeof fetch !== 'function') return;
-    var snap = localSnapshot();
-    var sig = sigOf(snap);
+    attempt = attempt || 0;
+    var mine = localSnapshot();
+    var mineHuddles = _parse(mine.keys['smb_perf_huddles_v1']);
     setBadge('sync', 'Saving...');
-    fetch(ENDPOINT, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(snap)
-    }).then(function(){
-      lastSyncedSig = sig;
-      pendingPush = false;
-      flash('ok', 'Saved', 1200);
+
+    /* Nothing mergeable to reconcile: plain PUT is correct and simplest. */
+    if(!mineHuddles){
+      fetch(ENDPOINT, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(mine) })
+        .then(function(){ lastSyncedSig = sigOf(mine); pendingPush = false; flash('ok','Saved',1200); })
+        .catch(function(){ setBadge('off','Offline - will retry on next save'); });
+      return;
+    }
+
+    fetch(ENDPOINT, { cache:'no-store' }).then(function(r){ return r.text(); }).then(function(txt){
+      var server = (txt==null||txt===''||txt==='null') ? null : _parse(txt);
+      var merged;
+      if(server && server.keys){
+        /* Cross-version safety: never merge across a storage-version break. */
+        if(server.__v != null && String(server.__v) !== String(mine.__v)){
+          setBadge('off','Server data v'+server.__v+' differs - not overwriting'); pendingPush = false; return;
+        }
+        var serverHuddles = _parse(server.keys['smb_perf_huddles_v1']);
+        var mergedHuddles = mergeHuddles(serverHuddles, mineHuddles);
+        /* Start from the server snapshot so keys other browsers changed are
+           kept, then lay my non-merge keys on top, then the merged huddles. */
+        merged = { __v: mine.__v, keys: {} };
+        var kk;
+        for(kk in server.keys){ if(server.keys.hasOwnProperty(kk)) merged.keys[kk] = server.keys[kk]; }
+        KEYS.forEach(function(k){
+          if(MERGE_KEYS[k]) return;
+          if(mine.keys[k] != null) merged.keys[k] = mine.keys[k];
+        });
+        merged.keys['smb_perf_huddles_v1'] = JSON.stringify(mergedHuddles);
+        /* Adopt the merged huddles locally too, so my view matches what I just
+           wrote and the next sig comparison is stable. */
+        try { origSet('smb_perf_huddles_v1', merged.keys['smb_perf_huddles_v1']); } catch(e){}
+        try { if(typeof renderPage === 'function') renderPage(); } catch(e){}
+      } else {
+        merged = mine;   /* server empty or unreadable: seed with mine */
+      }
+      fetch(ENDPOINT, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(merged) })
+        .then(function(){
+          lastSyncedSig = sigOf(localSnapshot());
+          pendingPush = false;
+          flash('ok','Saved',1200);
+        })
+        .catch(function(){
+          if(attempt < 1){ pushUp(attempt+1); return; }
+          setBadge('off','Offline - will retry on next save');
+        });
     }).catch(function(){
-      setBadge('off', 'Offline - will retry on next save');
+      /* Could not read the server. Retry once, then fall back to a plain PUT
+         so the save is not silently dropped. */
+      if(attempt < 1){ pushUp(attempt+1); return; }
+      fetch(ENDPOINT, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(mine) })
+        .then(function(){ lastSyncedSig = sigOf(mine); pendingPush = false; flash('ok','Saved',1200); })
+        .catch(function(){ setBadge('off','Offline - will retry on next save'); });
     });
   }
 
@@ -9489,11 +9588,27 @@ function _pndTile(label, val, valColor, bg){
       if(remoteSig === lastSyncedSig){ ready = true; flash('ok', 'Up to date', 1200); return; }
       if(remoteSig === localSig){ lastSyncedSig = remoteSig; ready = true; flash('ok', 'Up to date', 1200); return; }
 
-      /* Cloud has data this browser does not. Adopt it (only on the load-time
-         pull or when the user taps refresh while not mid-entry). */
-      lastSyncedSig = remoteSig;
+      /* Cloud differs from this browser. Merge rather than replace, so adopting
+         the team copy never wipes a local record the team copy has not seen
+         (e.g. an admin correction saved a moment ago). Record-level keys merge
+         by savedAt; other keys take the remote value on adopt. */
+      try {
+        var localHuddles = _parse(localStorage.getItem('smb_perf_huddles_v1'));
+        var remoteHuddles = remote.keys ? _parse(remote.keys['smb_perf_huddles_v1']) : null;
+        if(localHuddles && remoteHuddles){
+          var merged = mergeHuddles(remoteHuddles, localHuddles);
+          remote.keys['smb_perf_huddles_v1'] = JSON.stringify(merged);
+          /* If the merge differs from the raw remote, my copy had something the
+             server lacked: push the reconciled result back so the team gets it. */
+          if(remote.keys['smb_perf_huddles_v1'] !== (txt && _parse(txt) && _parse(txt).keys ? _parse(txt).keys['smb_perf_huddles_v1'] : null)){
+            pendingPush = true;
+          }
+        }
+      } catch(e){}
+      lastSyncedSig = sigOf(remote);
       applySnapshot(remote);
       ready = true;
+      if(pendingPush){ pushUp(); }
       if(remote.__migratedFromV1){
         /* Upgrade the cloud node to the v2 shape so every other browser reads it. */
         pushUp();
@@ -9571,6 +9686,15 @@ function _pndTile(label, val, valColor, bg){
     pull();   // one-time reconcile with the cloud on load. No background polling.
   }
 
+  try{
+    if(typeof window!=='undefined' && window.__PD_ADAPTER_TEST){
+      window.__pdAdapter = {
+        set:function(k,v){ return origSet(k,v); },
+        snapshot:localSnapshot, sig:sigOf, push:pushUp, pull:pull,
+        setReady:function(){ ready=true; lastSyncedSig=sigOf(localSnapshot()); }
+      };
+    }
+  }catch(e){}
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', start);
   } else {
