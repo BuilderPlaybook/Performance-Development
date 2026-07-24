@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-24b';
+window.PND_BUILD = '2026-07-24c';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -2212,10 +2212,7 @@ function renderShell(){
         '<header class="tb">'+
           '<div class="tb-l"><div class="tb-org"><div class="tb-org-mk">'+esc(t.orgInitial||'L')+'</div><div><div class="tb-org-name">'+esc(t.orgName||'')+'</div><div class="tb-org-sub">'+esc(t.tagline||'')+'</div></div></div></div>'+
           '<div class="tb-c"><div class="tb-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input type="text" placeholder="Search" aria-label="Search"></div></div>'+
-          '<div class="tb-r">'+
-            (pdAccessMode()==='admin' ? '<button type="button" class="btn btn-sm" onclick="openBackup()" title="Download every P&amp;D data set as one file, or restore from a backup file" style="margin-right:12px">Backup</button>' : '')+
-            '<div class="tb-user" onclick="pndSwitchUser()" title="Switch user (staging)"><span class="tb-user-av av" style="background:'+cs.bg+';color:'+cs.fg+'">'+esc(cu?cu.initials:'')+'</span><span class="tb-user-name">'+esc(cu?fullName(cu):'')+'</span></div>'+
-          '</div>'+
+          '<div class="tb-r"><div class="tb-user" onclick="pndSwitchUser()" title="Switch user (staging)"><span class="tb-user-av av" style="background:'+cs.bg+';color:'+cs.fg+'">'+esc(cu?cu.initials:'')+'</span><span class="tb-user-name">'+esc(cu?fullName(cu):'')+'</span></div></div>'+
         '</header>'+
         '<main class="page" id="pd-main"></main>'+
       '</div>'+
@@ -2279,7 +2276,28 @@ function renderDashboard(){
     h += _pndDashboardSupervisor(cu, visiblePeople, thisMonday, mode==='admin');
   }
 
+  /* Data backup card, last card on the dashboard. Placement, card shape and
+     button labels match Marketing_Module.html so the control sits in the same
+     place in every module that has one. Admin only: the file carries the whole
+     tenant's performance record. */
+  if(mode === 'admin') h += _pndBackupCard();
+
   return h;
+}
+
+/* Data backup card (Marketing parity). Export downloads immediately; Import
+   opens the review modal, which shows what the file holds and takes an armed
+   second tap before it writes anything. */
+function _pndBackupCard(){
+  var cur = _pndBackupSummary(_pndBackupEnvelope());
+  return '<div class="card" style="margin-top:16px"><div class="card-hd"><span class="card-title">Data backup</span>'+
+    '<span class="cg-hint">Export or restore this module\'s data</span></div><div class="card-body">'+
+    '<div class="cg-meta">P&amp;D data is stored in this browser. Export a backup file you can keep or move to another machine, or restore from one. '+
+      'On this browser right now: '+_pndSummaryLine(cur)+'.</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button type="button" class="btn btn-primary btn-sm" onclick="pndDownloadBackup()">Export backup</button>'+
+      '<button type="button" class="btn btn-sm" onclick="openBackup()">Import backup</button>'+
+    '</div></div></div>';
 }
 
 /* ---- Dashboard helpers ---- */
@@ -2799,10 +2817,6 @@ function renderHuddle(){
            '<div class="hd-f"><label class="hd-l">VSP groups</label>'+
              '<button type="button" class="btn btn-sm" onclick="openComplianceGroups()"'+
              ' title="Which people roll up into each Performance Points Compliance measurable in VSP">Manage</button>'+
-           '</div>'+
-           '<div class="hd-f"><label class="hd-l">Data</label>'+
-             '<button type="button" class="btn btn-sm" onclick="openBackup()"'+
-             ' title="Download every P&amp;D data set as one file, or restore from a backup file">Backup / Restore</button>'+
            '</div>'
          : '')+
        _pdMeetingNote+
