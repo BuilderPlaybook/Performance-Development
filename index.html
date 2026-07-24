@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-24a';
+window.PND_BUILD = '2026-07-24b';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -2212,7 +2212,10 @@ function renderShell(){
         '<header class="tb">'+
           '<div class="tb-l"><div class="tb-org"><div class="tb-org-mk">'+esc(t.orgInitial||'L')+'</div><div><div class="tb-org-name">'+esc(t.orgName||'')+'</div><div class="tb-org-sub">'+esc(t.tagline||'')+'</div></div></div></div>'+
           '<div class="tb-c"><div class="tb-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input type="text" placeholder="Search" aria-label="Search"></div></div>'+
-          '<div class="tb-r"><div class="tb-user" onclick="pndSwitchUser()" title="Switch user (staging)"><span class="tb-user-av av" style="background:'+cs.bg+';color:'+cs.fg+'">'+esc(cu?cu.initials:'')+'</span><span class="tb-user-name">'+esc(cu?fullName(cu):'')+'</span></div></div>'+
+          '<div class="tb-r">'+
+            (pdAccessMode()==='admin' ? '<button type="button" class="btn btn-sm" onclick="openBackup()" title="Download every P&amp;D data set as one file, or restore from a backup file" style="margin-right:12px">Backup</button>' : '')+
+            '<div class="tb-user" onclick="pndSwitchUser()" title="Switch user (staging)"><span class="tb-user-av av" style="background:'+cs.bg+';color:'+cs.fg+'">'+esc(cu?cu.initials:'')+'</span><span class="tb-user-name">'+esc(cu?fullName(cu):'')+'</span></div>'+
+          '</div>'+
         '</header>'+
         '<main class="page" id="pd-main"></main>'+
       '</div>'+
@@ -2235,10 +2238,13 @@ function renderPage(){
     main.innerHTML = '<div class="denied"><div class="d-t">Supervisor access required</div>Performance &amp; Development is available to supervisors and HR. If you manage people and cannot see your team here, ask HR to set your supervisor flag.</div>';
     return;
   }
-  if(state.page==='dashboard'){ main.innerHTML = renderDashboardSoon(); return; }
-  if(state.page==='quarterly'){ main.innerHTML = renderQuarterly(); return; }
-  if(state.page==='annual'){ main.innerHTML = renderAnnual(); return; }
-  main.innerHTML = renderHuddle();
+  /* The backup modal is reachable from the topbar, so it mounts on whichever
+     page is showing rather than living inside the weekly page markup. */
+  var _bk = (state.bkOpen && pdAccessMode()==='admin') ? renderBackupModal() : '';
+  if(state.page==='dashboard'){ main.innerHTML = renderDashboardSoon()+_bk; return; }
+  if(state.page==='quarterly'){ main.innerHTML = renderQuarterly()+_bk; return; }
+  if(state.page==='annual'){ main.innerHTML = renderAnnual()+_bk; return; }
+  main.innerHTML = renderHuddle()+_bk;
 }
 
 function renderDashboardSoon(){
@@ -2877,7 +2883,6 @@ function renderHuddle(){
 
   if(state.historyOpen) h += renderHistoryModal(person);
   if(state.cgOpen && pdAccessMode()==='admin') h += renderComplianceGroupsModal();
-  if(state.bkOpen && pdAccessMode()==='admin') h += renderBackupModal();
   return h;
 }
 
