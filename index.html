@@ -1661,8 +1661,10 @@ function _pndSaveTrackingStart(o){
    pass because the weekly grid asks for it on every cell. */
 var _pndFirstWeekCache = null;
 function _pndFirstDataWeek(personId){
-  if(_pndFirstWeekCache && _pndFirstWeekCache.hasOwnProperty(personId)) return _pndFirstWeekCache[personId];
-  if(!_pndFirstWeekCache) _pndFirstWeekCache = {};
+  /* No cache. On the synced build the page paints before Firebase delivers the
+     huddle data; a cached "never tracked" result then froze the total row blank
+     even after the real answers arrived. Reading the store fresh every call
+     costs almost nothing and removes that whole class of blank-total bug. */
   var all = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
   var earliest = null, pfx = personId+'__';
   Object.keys(all).forEach(function(k){
@@ -1682,7 +1684,6 @@ function _pndFirstDataWeek(personId){
     var iso = k.slice(pfx.length);
     if(!earliest || iso < earliest) earliest = iso;
   });
-  _pndFirstWeekCache[personId] = earliest;
   return earliest;
 }
 function _pndInvalidateTrackingCache(){ _pndFirstWeekCache = null; }
