@@ -1083,6 +1083,13 @@ window.SMB_CATALOG = [
 var MODULE_ID = 'pnd';
 var STORE_VER = 'v1';
 
+/* Visible build stamp (Standards v2.46 Record 2). Deployed builds carry an
+   on-screen identifier so a screenshot says which build it came from without
+   anyone having to check. Rendered in the sidebar sub-line, so it is in every
+   screenshot of every page. P&D has no prior version lineage, so the stamp is
+   dated rather than numbered; a numbered scheme can replace it later. */
+window.PND_BUILD = '2026-07-24a';
+
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
 var AI_PROXY_URL = '';
@@ -1516,6 +1523,8 @@ var state = {
   weekIso:null,
   historyOpen:false,
   cgOpen:false,                                              /* VSP compliance groups modal */
+  bkOpen:false,                                              /* Backup and restore modal */
+  pndBk:null,                                                /* staged restore file, arm timer, last restore */
   qMoreOpen:false,                                           /* meta-strip More overflow menu */
   openGroups:{}
 };
@@ -2196,7 +2205,7 @@ function renderShell(){
   var html =
     '<div class="app">'+
       '<aside class="sb">'+
-        '<div class="sb-logo"><div class="sb-mark">S</div><div><div class="sb-name">Self-Managing Builder</div><div class="sb-sub">Performance & Development</div></div></div>'+
+        '<div class="sb-logo"><div class="sb-mark">S</div><div><div class="sb-name">Self-Managing Builder</div><div class="sb-sub">Performance & Development &middot; '+esc(window.PND_BUILD||'')+'</div></div></div>'+
         '<nav class="sb-nav">'+renderNav()+'</nav>'+
       '</aside>'+
       '<div class="main">'+
@@ -2784,6 +2793,10 @@ function renderHuddle(){
            '<div class="hd-f"><label class="hd-l">VSP groups</label>'+
              '<button type="button" class="btn btn-sm" onclick="openComplianceGroups()"'+
              ' title="Which people roll up into each Performance Points Compliance measurable in VSP">Manage</button>'+
+           '</div>'+
+           '<div class="hd-f"><label class="hd-l">Data</label>'+
+             '<button type="button" class="btn btn-sm" onclick="openBackup()"'+
+             ' title="Download every P&amp;D data set as one file, or restore from a backup file">Backup / Restore</button>'+
            '</div>'
          : '')+
        _pdMeetingNote+
@@ -2864,6 +2877,7 @@ function renderHuddle(){
 
   if(state.historyOpen) h += renderHistoryModal(person);
   if(state.cgOpen && pdAccessMode()==='admin') h += renderComplianceGroupsModal();
+  if(state.bkOpen && pdAccessMode()==='admin') h += renderBackupModal();
   return h;
 }
 
@@ -5999,6 +6013,348 @@ function renderComplianceGroupsModal(){
     '<div class="modal-b">'+
       '<div class="smb-modal-sub" style="margin-bottom:14px">Each group is the average of its members\' weekly scores and fills one Performance Points Compliance measurable in VSP. A week is sent to VSP only once it has closed for everyone in the group.</div>'+
       '<div id="cg-body">'+_pndComplianceGroupsBody()+'</div>'+
+    '</div></div></div>';
+}
+
+/* ============================================================
+   BACKUP AND RESTORE v1
+   P&D holds the whole performance record locally: every scored week, every
+   quarterly and annual, the role standards, the tracking starts, the lock
+   tiers and the compliance groups. Until the DB persistence backend lands
+   there is no server copy of any of it, so a cleared browser profile takes
+   the lot. This writes the entire module state out as one JSON file and
+   reads it back.
+
+   Scope. Everything the tenant owns goes in the file. Device-local settings
+   do not: the tour-seen map, the staging device-user pick and the scorecard
+   column widths belong to the machine rather than to the company, and moving
+   them between browsers would put one person's settings on someone else's
+   screen. The manifest below is explicit; a sweep then picks up any other
+   smb_perf_ / smb_pnd_ key present, so a store added later cannot go missing
+   from a backup because nobody remembered to list it here.
+
+   Restore safety. Every restore snapshots the current state to
+   PND_PRERESTORE_KEY before it writes anything, so Undo puts back exactly
+   what was there. Commit is an armed second tap with a 15 second window, not
+   a native confirm, per No-Native-Dialogs Rule v1 (D-111): native dialogs are
+   silently suppressed on some iPad configurations, which would turn the
+   commit into a dead tap.
+
+   Sync. On a deployed build the staging adapter watches localStorage, so a
+   restore propagates to everyone on the shared node. That is the right
+   behaviour when recovering from a loss and the wrong one when restoring a
+   stale file, so the modal states it plainly above the commit control.
+   ============================================================ */
+var PND_BACKUP_FORMAT = 'smb.pnd.backup';
+var PND_BACKUP_VERSION = 1;
+var PND_PRERESTORE_KEY = 'smb_pnd_prerestore_v1';
+/* Tenant-owned stores. smb_perf_history_v1 is included deliberately: it is
+   written by pdSave('history') and is NOT in the staging adapter's synced key
+   list, so it exists only on the browser that recorded it. A backup is the
+   only way it survives at all. */
+var PND_BACKUP_KEYS = [
+  'smb_perf_huddles_v1',
+  'smb_perf_history_v1',
+  'smb_perf_quarterly_v1',
+  'smb_perf_annual_v1',
+  'smb_perf_role_standards_v1',
+  'smb_perf_role_order_v1',
+  'smb_pnd_cadence_v1',
+  'smb_pnd_review_dates_v1',
+  'smb_pnd_tracking_start_v1',
+  'smb_pnd_compliance_groups_v1',
+  'smb_pnd_lock_tier_v1',
+  'smb_pnd_compliance_bridge_v1'
+];
+/* Device-local, never carried between browsers. Literals rather than the
+   constants, because PND_DEVICE_USER_KEY is declared further down the file
+   and would still be undefined when this runs. */
+var PND_BACKUP_EXCLUDE = {
+  'smb_pnd_prerestore_v1': 1,
+  'smb_pnd_tours_seen_v1': 1,
+  'smb_pnd_device_user': 1
+};
+
+function _pndBackupKeyList(){
+  var out = PND_BACKUP_KEYS.slice();
+  try{
+    for(var i=0; i<localStorage.length; i++){
+      var k = localStorage.key(i);
+      if(!k) continue;
+      if(out.indexOf(k) !== -1) continue;
+      if(PND_BACKUP_EXCLUDE[k]) continue;
+      if(k.indexOf('smb_perf_')===0 || k.indexOf('smb_pnd_')===0) out.push(k);
+    }
+  }catch(e){}
+  return out;
+}
+/* Raw strings, not parsed objects, so the file round-trips byte for byte. */
+function _pndBackupEnvelope(){
+  var keys = {}, n = 0;
+  _pndBackupKeyList().forEach(function(k){
+    var v = null;
+    try{ v = localStorage.getItem(k); }catch(e){ v = null; }
+    if(v == null) return;
+    keys[k] = v; n++;
+  });
+  var cu = currentUser();
+  return {
+    format: PND_BACKUP_FORMAT,
+    v: PND_BACKUP_VERSION,
+    storageVersion: PD_STORAGE_VERSION,
+    build: window.PND_BUILD || '',
+    tenant: (window.SMB_TENANT && window.SMB_TENANT.orgName) || '',
+    takenAt: new Date().toISOString(),
+    takenBy: cu ? fullName(cu) : '',
+    keyCount: n,
+    keys: keys
+  };
+}
+/* What is actually in an envelope, in the terms a reader cares about. Used for
+   both the current state and a staged file so the two can be compared before
+   anything is overwritten. */
+function _pndBackupSummary(env){
+  function parse(k){
+    try{ return JSON.parse(((env&&env.keys)||{})[k] || 'null'); }catch(e){ return null; }
+  }
+  var hud = parse('smb_perf_huddles_v1') || {};
+  var seen = {}, weeks = 0;
+  Object.keys(hud).forEach(function(k){
+    weeks++;
+    var pid = String(k).split('__')[0];
+    if(pid) seen[pid] = 1;
+  });
+  var q = parse('smb_perf_quarterly_v1') || {};
+  var a = parse('smb_perf_annual_v1') || {};
+  var rs = parse('smb_perf_role_standards_v1') || {};
+  return {
+    weeks: weeks,
+    people: Object.keys(seen).length,
+    quarterlies: Object.keys(q).length,
+    annuals: Object.keys(a).length,
+    roles: Object.keys(rs).length,
+    keys: Object.keys((env&&env.keys)||{}).length
+  };
+}
+function _pndSummaryLine(s){
+  return s.weeks+' scored weeks across '+s.people+' people &middot; '+
+         s.quarterlies+' quarterly &middot; '+s.annuals+' annual &middot; '+
+         s.roles+' role standards &middot; '+s.keys+' data sets';
+}
+function pndDownloadBackup(){
+  var env;
+  try{ env = _pndBackupEnvelope(); }catch(e){ toast('Backup could not be built.'); return; }
+  var slug = String(env.tenant||'tenant').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  if(!slug) slug = 'tenant';
+  var name = 'pnd-backup-'+slug+'-'+isoDate(new Date())+'.json';
+  try{
+    var blob = new Blob([JSON.stringify(env, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); document.body.removeChild(a); }catch(e){} }, 0);
+    toast('Backup downloaded: '+name);
+  }catch(e){ toast('This browser blocked the download.'); }
+}
+/* Read a picked file, validate it, and stage it for review. Nothing is written
+   to storage here; staging only fills state so the modal can show what the
+   file holds before anyone commits to it. */
+function pndPickRestoreFile(input){
+  var f = input && input.files && input.files[0];
+  state.pndBk = state.pndBk || {};
+  if(!f) return;
+  var rd = new FileReader();
+  rd.onload = function(){
+    var env = null, err = '';
+    try{ env = JSON.parse(String(rd.result||'')); }
+    catch(e){ err = 'That file is not valid JSON.'; }
+    if(!err){
+      if(!env || env.format !== PND_BACKUP_FORMAT){
+        err = 'That is not a P&D backup file.';
+      } else if(!env.keys || typeof env.keys !== 'object'){
+        err = 'That backup file carries no data.';
+      } else if(Number(env.v) > PND_BACKUP_VERSION){
+        err = 'That backup was written by a newer build than this one. Update the build before restoring.';
+      } else if(Number(env.storageVersion) !== PD_STORAGE_VERSION){
+        err = 'That backup is from data model v'+esc(String(env.storageVersion))+
+              ' and this build is v'+PD_STORAGE_VERSION+'. Restoring across data models is refused.';
+      }
+    }
+    state.pndBk.staged = err ? null : env;
+    state.pndBk.error = err;
+    state.pndBk.armedUntil = 0;
+    state.pndBk.restored = null;
+    _pndRepaintBackup();
+  };
+  rd.onerror = function(){
+    state.pndBk.staged = null;
+    state.pndBk.error = 'That file could not be read.';
+    _pndRepaintBackup();
+  };
+  rd.readAsText(f);
+}
+var _pndBkTimer = null;
+function _pndBkClearTimer(){
+  if(_pndBkTimer){ clearInterval(_pndBkTimer); _pndBkTimer = null; }
+}
+/* Armed second activation, 15 second window, per D-111. The label counts down
+   in place; the arming lapses quietly if nobody takes the second tap. */
+function pndArmRestore(){
+  if(!state.pndBk || !state.pndBk.staged) return;
+  state.pndBk.armedUntil = Date.now() + 15000;
+  _pndBkClearTimer();
+  _pndBkTimer = setInterval(function(){
+    var until = (state.pndBk && state.pndBk.armedUntil) || 0;
+    var left = until ? Math.ceil((until - Date.now())/1000) : 0;
+    if(left <= 0){
+      _pndBkClearTimer();
+      if(state.pndBk) state.pndBk.armedUntil = 0;
+      _pndRepaintBackup();
+      return;
+    }
+    var btn = document.getElementById('bk-commit');
+    if(btn) btn.textContent = 'Confirm restore ('+left+')';
+  }, 250);
+  _pndRepaintBackup();
+}
+function pndCommitRestore(){
+  var env = state.pndBk && state.pndBk.staged;
+  if(!env) return;
+  if(!state.pndBk.armedUntil || Date.now() > state.pndBk.armedUntil){ pndArmRestore(); return; }
+  _pndBkClearTimer();
+  /* Snapshot before writing. Undo depends on this and nothing else. */
+  var pre = null;
+  try{
+    pre = _pndBackupEnvelope();
+    pre.reason = 'pre-restore';
+    localStorage.setItem(PND_PRERESTORE_KEY, JSON.stringify(pre));
+  }catch(e){ pre = null; }
+  var written = 0;
+  Object.keys(env.keys||{}).forEach(function(k){
+    if(PND_BACKUP_EXCLUDE[k]) return;
+    if(k.indexOf('smb_perf_')!==0 && k.indexOf('smb_pnd_')!==0) return;
+    try{ localStorage.setItem(k, env.keys[k]); written++; }catch(e){}
+  });
+  state.pndBk.staged = null;
+  state.pndBk.armedUntil = 0;
+  state.pndBk.error = '';
+  state.pndBk.restored = { at: new Date().toISOString(), keys: written, canUndo: !!pre };
+  try{ _pndInvalidateTrackingCache(); }catch(e){}
+  try{ emitPndSignals(); }catch(e){}
+  try{ _pndWriteComplianceBridge(); }catch(e){}
+  toast('Restored '+written+' data sets.');
+  renderPage();
+}
+function pndUndoRestore(){
+  var raw = null;
+  try{ raw = localStorage.getItem(PND_PRERESTORE_KEY); }catch(e){}
+  if(!raw){ toast('No pre-restore snapshot on this browser.'); return; }
+  var env = null;
+  try{ env = JSON.parse(raw); }catch(e){}
+  if(!env || !env.keys){ toast('The pre-restore snapshot cannot be read.'); return; }
+  var n = 0;
+  Object.keys(env.keys).forEach(function(k){
+    if(PND_BACKUP_EXCLUDE[k]) return;
+    if(k.indexOf('smb_perf_')!==0 && k.indexOf('smb_pnd_')!==0) return;
+    try{ localStorage.setItem(k, env.keys[k]); n++; }catch(e){}
+  });
+  if(state.pndBk) state.pndBk.restored = null;
+  try{ _pndInvalidateTrackingCache(); }catch(e){}
+  try{ emitPndSignals(); }catch(e){}
+  try{ _pndWriteComplianceBridge(); }catch(e){}
+  toast('Undone. '+n+' data sets put back.');
+  renderPage();
+}
+function openBackup(){
+  state.bkOpen = true;
+  state.pndBk = state.pndBk || {};
+  state.pndBk.armedUntil = 0;
+  renderPage();
+}
+function closeBackup(){
+  state.bkOpen = false;
+  _pndBkClearTimer();
+  if(state.pndBk){ state.pndBk.armedUntil = 0; state.pndBk.staged = null; state.pndBk.error = ''; }
+  renderPage();
+}
+/* Repaint the body only, so picking a file does not scroll the modal away. */
+function _pndRepaintBackup(){
+  var host = document.getElementById('bk-body');
+  if(host) host.innerHTML = _pndBackupBody();
+}
+function _pndBackupBody(){
+  var bk = state.pndBk || {};
+  var cur = _pndBackupSummary(_pndBackupEnvelope());
+  var h = '';
+
+  /* Backup */
+  h += '<div class="cg-grp">'+
+         '<div class="cg-hd"><span class="cg-lbl">Backup</span><span class="chip c-blu">'+cur.keys+' data sets</span></div>'+
+         '<div class="cg-meta">On this browser right now: '+_pndSummaryLine(cur)+'.</div>'+
+         '<div class="cg-queue">One JSON file holding every P&amp;D store this tenant owns. Device settings stay behind: the tour markers, the staging user pick and your scorecard column widths belong to this machine, not to the company.</div>'+
+         '<button type="button" class="btn btn-gold btn-sm" onclick="pndDownloadBackup()">Download backup</button>'+
+       '</div>';
+
+  /* Restore */
+  h += '<div class="cg-grp">'+
+         '<div class="cg-hd"><span class="cg-lbl">Restore</span></div>'+
+         '<div class="cg-meta">Reads a backup file back over the data on this browser. Nothing is written until you confirm.</div>'+
+         '<div class="hd-f"><label class="hd-l" for="bk-file">Backup file</label>'+
+           '<input id="bk-file" type="file" accept="application/json,.json" class="inp" onchange="pndPickRestoreFile(this)">'+
+         '</div>';
+
+  if(bk.error){
+    h += '<div class="cg-queue"><span class="chip c-red">Refused</span> '+esc(bk.error)+'</div>';
+  }
+
+  if(bk.staged){
+    var st = _pndBackupSummary(bk.staged);
+    var takenIso = String(bk.staged.takenAt||'').slice(0,10);
+    var when = takenIso ? _pndFormatDateShort(takenIso) : 'unknown date';
+    var older = (st.weeks < cur.weeks) || (st.quarterlies < cur.quarterlies) || (st.annuals < cur.annuals);
+    h += '<div class="cg-queue">'+
+           '<b>File contents</b><br>'+
+           'Taken '+esc(when)+
+             (bk.staged.takenBy ? ' by '+esc(bk.staged.takenBy) : '')+
+             (bk.staged.build ? ' on build '+esc(bk.staged.build) : '')+
+             (bk.staged.tenant ? ' &middot; '+esc(bk.staged.tenant) : '')+'<br>'+
+           _pndSummaryLine(st)+'<br>'+
+           '<span style="color:var(--txm)">Currently on this browser: '+_pndSummaryLine(cur)+'</span>'+
+         '</div>';
+    if(older){
+      h += '<div class="cg-queue"><span class="chip c-amb">Check this</span> This file holds less than what is on this browser now. Restoring it will write the smaller set over the larger one. Take a backup of the current state first if you are not certain.</div>';
+    }
+    h += '<div class="cg-queue"><span class="chip c-amb">Sync</span> On the deployed build this browser pushes to the shared node, so a restore reaches the whole team, not just this machine. Undo is available immediately afterwards and puts back exactly what was here.</div>';
+    h += '<button type="button" id="bk-commit" class="btn btn-sm" onclick="pndCommitRestore()">'+
+           (bk.armedUntil && Date.now() < bk.armedUntil ? 'Confirm restore (15)' : 'Restore from this file')+
+         '</button>';
+    if(bk.armedUntil && Date.now() < bk.armedUntil){
+      h += '<span class="cg-hint">tap again to commit</span>';
+    }
+  }
+
+  if(bk.restored){
+    h += '<div class="cg-queue"><span class="chip c-grn">Restored</span> '+bk.restored.keys+' data sets written '+
+         esc(_pndFormatDateShort(String(bk.restored.at).slice(0,10)))+'.'+
+         (bk.restored.canUndo ? ' The state from just before the restore is saved on this browser.' : ' No pre-restore snapshot was saved, so this cannot be undone here.')+
+         '</div>';
+    if(bk.restored.canUndo){
+      h += '<button type="button" class="btn btn-sm" onclick="pndUndoRestore()">Undo restore</button>';
+    }
+  }
+
+  h += '</div>';
+  return h;
+}
+function renderBackupModal(){
+  /* Modal Keydown StopPropagation Rule v1 (Standards v2.32 / D-88):
+     onkeydown + onclick stopPropagation on .modal container, type="button" on every button. */
+  return '<div class="modal-overlay" onclick="closeBackup()"><div class="modal cg-modal" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Backup and restore">'+
+    '<div class="modal-h"><span class="smb-modal-title">Backup and restore</span><button type="button" class="modal-x" onclick="closeBackup()" aria-label="Close">&times;</button></div>'+
+    '<div class="modal-b">'+
+      '<div class="smb-modal-sub" style="margin-bottom:14px">P&amp;D data lives in this browser until the persistence backend lands. Take a backup before anything risky, and keep one off the machine.</div>'+
+      '<div id="bk-body">'+_pndBackupBody()+'</div>'+
     '</div></div></div>';
 }
 
@@ -9447,6 +9803,7 @@ function _pndTile(label, val, valColor, bg){
 }
 
 </script>
+
 <!-- ============================================================
      SMB P&D STAGING ADAPTER v2  (2026-07-13)
      Built line-for-line on the WORKING VSP Staging Adapter v2.1 model
