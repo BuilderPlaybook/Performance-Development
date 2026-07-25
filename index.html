@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-24-FIX';
+window.PND_BUILD = '2026-07-24-M3';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -2331,6 +2331,54 @@ function _pndHuddleStatusThisWeek(personId, weekIso){
   if(answered < std.length) return 'in-progress';
   return 'complete';
 }
+/* ============================================================
+   WEEKLY-SCORE AGGREGATE - single source of truth (D-113)
+
+   The overall "Weekly Score" total shown on the scorecard (e.g. Keith 82%) and
+   the number published to VSP via SMB_PND_HUDDLES.weeklyScoreSummary come from
+   THIS function. The scorecard totals row and the contract both call it, so the
+   displayed number and the published number can never drift.
+
+   Rules, exactly as the scorecard totals row applies them:
+     - untracked week (before the person's tracking start): not counted
+     - away week: excluded entirely (neither numerator nor denominator)
+     - open / not-yet-locked week (_pndWeekPending): not scored yet, excluded
+     - closed with no record: counts as 0%, IS in the denominator
+     - scored week: hard-fail forces 0%, else round(yes/total*100)
+   Returns { pct: number|null, weeksCounted: number }. pct is null when no week
+   qualified (weeksCounted 0), which is what renders the total as a dash.
+
+   `metrics` is the person's weekly measurable list (section.metrics from the
+   scorecard build). `weeks` is an array of { iso, idx } where iso is the
+   week-start string and idx is the index into m.readings for that week. The
+   scorecard passes its visible columns (idx is the real reading index, which is
+   not the same as array position for date ranges like last13). */
+function _pndWeeklyScoreAggregate(personId, metrics, weeks){
+  function _isYes(v){ if(v==null) return false; var s=String(v).trim().toLowerCase(); return (s==='yes'||s==='y'||s==='true'||s==='1'); }
+  var huddles = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
+  var sum=0, count=0;
+  (weeks||[]).forEach(function(wk){
+    var iso = wk.iso, idx = wk.idx;
+    if(iso && !isWeekTracked(personId, iso)) return;               /* outside tracked period */
+    var rec = iso ? huddles[personId+'__'+iso] : null;
+    if(rec && rec.away) return;                                    /* away excluded */
+    if(iso && _pndWeekPending(personId, iso, rec)) return;         /* open/unlocked: not scored yet */
+    if(!rec){ sum += 0; count++; return; }                         /* closed and empty = 0% */
+    var y=0, hf=false, t=0;
+    (metrics||[]).forEach(function(m){
+      t++;
+      var v = m.readings[idx];
+      if(_isYes(v)) y++;
+      else if(m._hard) hf=true;
+    });
+    var raw = t ? Math.round(y/t*100) : 0;
+    sum += (hf ? 0 : raw);
+    count++;
+  });
+  return { pct: (count ? Math.round(sum/count) : null), weeksCounted: count };
+}
+/* ============================================================ */
+
 /* Last N weeks' scores for a person for the mini-trend widget. Returns array of
    {iso, pct, away} newest-last. */
 function _pndLastNScores(personId, weekIso, n){
@@ -2859,42 +2907,9 @@ function renderHuddle(){
     h += renderScorecardPND(person, std);
   }
 
-  // Human conversation
-  h += '<div class="sec-block"><div class="sec-hd"><span class="sec-t">Conversation</span></div><div class="sec-bd"><div class="conv-grid">'+
-        '<div><label for="cv-doing">How are you doing?</label><textarea id="cv-doing" class="ta" onchange="saveConversation()">'+esc(rec.conv.doing)+'</textarea></div>'+
-        '<div><label for="cv-support">What can I do to support you?</label><textarea id="cv-support" class="ta" onchange="saveConversation()">'+esc(rec.conv.support)+'</textarea></div>'+
-       '</div></div></div>';
-
-  // Goals for the week
-  h += '<div class="sec-block"><div class="sec-hd"><span class="sec-t">Goals for the Week</span><button class="btn btn-sm" style="margin-left:auto" onclick="addGoal()">Add job</button></div><div class="sec-bd">';
-  if(!rec.goals.length){
-    h += '<div class="empty">No jobs added yet. Add a job to track last week and this week goals.</div>';
-  } else {
-    h += '<table class="gtbl"><thead><tr><th style="width:150px">Job</th><th style="width:96px">Period</th><th style="width:74px">Done</th><th>Goal</th><th style="width:40px"></th></tr></thead><tbody>';
-    rec.goals.forEach(function(g, i){
-      h += '<tr><td rowspan="2"><input class="gnote" style="min-height:30px" value="'+escAttr(g.job)+'" onchange="editGoal('+i+',\'job\',this.value)" placeholder="Job name"></td>'+
-            '<td class="per">Last week</td>'+
-            '<td>'+ynSel(g.lastDone, i, 'lastDone')+'</td>'+
-            '<td><textarea class="gnote" onchange="editGoal('+i+',\'lastNote\',this.value)">'+esc(g.lastNote)+'</textarea></td>'+
-            '<td rowspan="2"><button class="icon-x" title="Remove job" onclick="removeGoal('+i+')">&times;</button></td></tr>'+
-           '<tr><td class="per">This week</td>'+
-            '<td>'+ynSel(g.thisDone, i, 'thisDone')+'</td>'+
-            '<td><textarea class="gnote" onchange="editGoal('+i+',\'thisNote\',this.value)">'+esc(g.thisNote)+'</textarea></td></tr>';
-    });
-    h += '</tbody></table>';
-  }
-  h += '</div></div>';
-
-  // To discuss
-  h += '<div class="sec-block"><div class="sec-hd"><span class="sec-t">To Discuss</span><button class="btn btn-sm" style="margin-left:auto" onclick="addDiscuss()">Add item</button></div><div class="sec-bd">';
-  if(!rec.discuss.length){
-    h += '<div class="empty">Customer issues, crew issues, closings, blockers.</div>';
-  } else {
-    rec.discuss.forEach(function(d, i){
-      h += '<div class="row" style="margin-bottom:8px"><textarea class="gnote" style="flex:1" onchange="editDiscuss('+i+',this.value)">'+esc(d)+'</textarea><button class="icon-x" onclick="removeDiscuss('+i+')" title="Remove">&times;</button></div>';
-    });
-  }
-  h += '</div></div>';
+  /* Conversation, Goals for the Week, and To Discuss were removed from the
+     scorecard: that discussion happens in the huddle meeting (VSP), not on the
+     performance scorecard. The scorecard is standards and scores only. */
 
   if(state.historyOpen) h += renderHistoryModal(person);
   if(state.cgOpen && pdAccessMode()==='admin') h += renderComplianceGroupsModal();
@@ -6084,7 +6099,8 @@ var PND_BACKUP_KEYS = [
   'smb_pnd_tracking_start_v1',
   'smb_pnd_compliance_groups_v1',
   'smb_pnd_lock_tier_v1',
-  'smb_pnd_compliance_bridge_v1'
+  'smb_pnd_compliance_bridge_v1',
+  'smb_pnd_monthly_v1'
 ];
 /* Device-local, never carried between browsers. Literals rather than the
    constants, because PND_DEVICE_USER_KEY is declared further down the file
@@ -6468,7 +6484,12 @@ window.SMB_PND_HUDDLES = {
       var all = _pndLoadHuddles();
       var rec = all[personId+'__'+weekIso] || null;
       var pct = null, hardFail = false;
-      if(rec && !rec.away){
+      /* An open / not-yet-locked week is not scored yet - it shows as a dash on
+         the scorecard, so publish pct:null to match. Without this, an open week
+         holding an empty record scores 0% (hard-fail) and VSP would mirror a red
+         0 where the scorecard shows a dash. Same gate the scorecard and
+         weeklyScoreSummary use. */
+      if(rec && !rec.away && !_pndWeekPending(personId, weekIso, rec)){
         var scores = _pndLastNScores(personId, weekIso, 1);
         if(scores.length){ pct = scores[0].pct; hardFail = !!scores[0].hardFail; }
       }
@@ -6481,6 +6502,65 @@ window.SMB_PND_HUDDLES = {
       };
     }catch(e){
       return { status:'not-started', pct:null, hardFail:false, discussed:false, discussedAt:null };
+    }
+  },
+  /* Overall weekly-score total for a person, exactly as the P&D weekly
+     scorecard's "Weekly Score" row displays it (e.g. Keith 82%). Computed by
+     P&D's own scoring via the single-source-of-truth _pndWeeklyScoreAggregate,
+     the same function the scorecard row calls, over the default Last 13 Weeks
+     window. VSP reads this to fill the mirrored total cell; nothing is
+     recomputed on the VSP side.
+
+     Rules (identical to the scorecard total): hard-fail forces a week to 0%;
+     a closed week with no record counts as 0%; away weeks are excluded; an
+     open / not-yet-locked week is excluded (the same week statusFor returns
+     pct:null for); weeks before the person's tracking start are excluded.
+
+     Returns { pct: number|null, weeksCounted: number, asOf: iso-string }.
+     pct is null (and weeksCounted 0) when no week qualifies, so VSP can render
+     an empty state. Side-effect-free: snapshots and restores the render globals
+     the scorecard builder touches, so calling it never disturbs the UI. */
+  weeklyScoreSummary: function(personId){
+    var _asOf = new Date().toISOString();
+    try{
+      var person = personById(personId);
+      if(!person) return { pct:null, weeksCounted:0, asOf:_asOf };
+      var std = standardFor(person);
+      if(!std) return { pct:null, weeksCounted:0, asOf:_asOf };
+
+      /* Snapshot every global the builder mutates, so this read leaves the
+         live render state exactly as it found it. */
+      var _snapCard = (typeof scorecard!=='undefined') ? scorecard : null;
+      var _snapReportId = (typeof _pndScReportId!=='undefined') ? _pndScReportId : null;
+      var _snapWeekIsos = (typeof _pndScWeekIsos!=='undefined') ? _pndScWeekIsos : null;
+      var _snapWeekIso = state.weekIso;
+      var _snapScMap = (typeof _pndScMap!=='undefined') ? _pndScMap : null;
+      try{
+        /* Build against the current week so the default Last 13 window ends at
+           the current week, matching the scorecard's default view. weekIso is
+           an ISO string throughout the render code, so pass a string. */
+        state.weekIso = isoDate(mondayOf(new Date()));
+        _pndBuildScorecardData(person, std);
+        var metrics = (scorecard && scorecard[0]) ? scorecard[0].metrics.filter(function(m){ return (m.cadence||'weekly')==='weekly'; }) : [];
+        /* Default view = Last 13 Weeks: the 13 weeks ending at the current one.
+           _pndScWeekIsos holds 52 weeks oldest-first ending at the current week,
+           and m.readings is indexed 1:1 with it, so the last 13 indices are the
+           last13 window. */
+        var n = _pndScWeekIsos.length;
+        var weeks = [];
+        for(var i=Math.max(0,n-13); i<n; i++){ weeks.push({ iso:_pndScWeekIsos[i], idx:i }); }
+        var res = _pndWeeklyScoreAggregate(personId, metrics, weeks);
+        return { pct: res.pct, weeksCounted: res.weeksCounted, asOf:_asOf };
+      } finally {
+        /* Restore. */
+        if(_snapCard!==null) scorecard = _snapCard;
+        if(_snapReportId!==null) _pndScReportId = _snapReportId;
+        if(_snapWeekIsos!==null) _pndScWeekIsos = _snapWeekIsos;
+        if(_snapScMap!==null) _pndScMap = _snapScMap;
+        state.weekIso = _snapWeekIso;
+      }
+    }catch(e){
+      return { pct:null, weeksCounted:0, asOf:_asOf };
     }
   },
   /* Current-period review state for a person.
@@ -6907,13 +6987,14 @@ function renderScorecard(){
 
   var h='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px"><div><div class="pg-title">Scorecard</div>';
   h+='<div class="pg-sub">'+totalGreen+' of '+totalMetrics+' metrics on target this week \u00b7 Green = on target, trend arrow shows 3-week direction</div></div>';
-  // Right-side action group: Print / Export CSV / + Create (matches Goals page pattern)
+  // Right-side action group: Print / Export CSV. The + Create menu (Issue,
+  // To-Do, Goal, Headline, Cascading Message) was VSP L10-meeting machinery
+  // and does not belong on the performance scorecard, so it is removed.
   h+='<div style="display:flex;gap:7px;margin-top:4px;flex-shrink:0">';
   h+='<button class="btn btn-sm" onclick="printScorecard()" style="display:flex;align-items:center;gap:5px">';
   h+='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg> Print</button>';
   h+='<button class="btn btn-sm" onclick="exportScorecardCSV()" style="display:flex;align-items:center;gap:5px">';
   h+='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export CSV</button>';
-  h+=renderCreateMenuBtn('scorecard');
   h+='</div></div>';
 
   // ── Team selector row
@@ -7240,31 +7321,62 @@ function renderScorecard(){
       // weeks excluded from both numerator and denominator).
       (function _pndInjectTotalsRow(){
         function _pndIsYes(v){ if(v==null)return false; var s=String(v).trim().toLowerCase(); return (s==='yes'||s==='y'||s==='true'||s==='1'); }
+
+        /* Non-weekly score row (Monthly / Quarterly / Annual): the same
+           Yes/total-per-column idea as the weekly row, read straight off
+           m.readings by the active column index. No huddle records, no Away,
+           no Clear, no tracking gate - those are week-only concepts. This makes
+           the Monthly tab a real scorecard with its own score line, matching
+           the weekly one, sized to however many monthly rows exist. */
+        if(period!=='weekly'){
+          if(!_scOrder.length) return;
+          var _mAggSum=0,_mAggCount=0;
+          activeIdxs.forEach(function(_ci){
+            var _y=0,_hf=false,_t=0,_any=false;
+            _scOrder.forEach(function(_mi){
+              var _mm=section.metrics[_mi]; var _v=_mm.readings[_ci];
+              if(_v==null||_v==='') return;
+              _any=true; _t++;
+              if(_pndIsYes(_v)) _y++; else if(_mm._hard) _hf=true;
+            });
+            if(!_any) return;
+            _mAggSum += (_hf?0:(_t?Math.round(_y/_t*100):0)); _mAggCount++;
+          });
+          var _mAgg=_mAggCount?Math.round(_mAggSum/_mAggCount):null;
+          var _mAggColor=_mAgg==null?'var(--txm)':(_mAgg>=90?'#16a34a':(_mAgg>=75?'#d97706':'#dc2626'));
+          var _mLabel=(period==='quarterly'?'Quarterly Score':(period==='annual'?'Annual Score':'Monthly Score'));
+          h+='<tr class="pnd-totals-row">';
+          h+='<td colspan="7" style="position:sticky;left:0;z-index:2;background:var(--sur2);padding:10px 14px;color:var(--txt);font-size:var(--fz-body);border-top:2px solid var(--brd);vertical-align:middle"><span style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">'+_mLabel+'</span></td>';
+          h+='<td title="Average of the columns that have data" style="text-align:center;padding:10px 8px;background:var(--sur2);border-top:2px solid var(--brd);border-right:2px solid var(--brd);vertical-align:middle;font-weight:700;font-size:var(--fz-lg);color:'+_mAggColor+'">'+(_mAgg==null?'-':_mAgg+'%')+'</td>';
+          activeIdxs.forEach(function(_ci){
+            var _y=0,_hf=false,_t=0,_any=false;
+            _scOrder.forEach(function(_mi){
+              var _mm=section.metrics[_mi]; var _v=_mm.readings[_ci];
+              if(_v==null||_v==='') return;
+              _any=true; _t++;
+              if(_pndIsYes(_v)) _y++; else if(_mm._hard) _hf=true;
+            });
+            if(!_any){ h+='<td style="text-align:center;padding:10px 6px;border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)"><div style="height:20px;line-height:20px;color:var(--txd)">-</div></td>'; return; }
+            var _pct=_hf?0:(_t?Math.round(_y/_t*100):0);
+            var _c=_hf?'#dc2626':(_pct>=90?'#16a34a':(_pct>=75?'#d97706':'#dc2626'));
+            var _bg=_hf?'#fee2e2':(_pct>=90?'#d1fae5':(_pct>=75?'#fef3c7':'#fee2e2'));
+            h+='<td title="Yes '+_y+' / '+_t+(_hf?' - hard fail':'')+'" style="text-align:center;padding:10px 6px;background:'+_bg+';border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)"><div style="height:20px;line-height:20px;font-weight:700;color:'+_c+'">'+_pct+'%</div></td>';
+          });
+          h+='</tr>';
+          return;
+        }
+
         var _pndHuddles = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
         var _pndWeekIsos = (typeof _pndScWeekIsos!=='undefined') ? _pndScWeekIsos : [];
 
-        // First pass: compute aggregate across the visible period
-        var _pndAggSum=0, _pndAggCount=0;
-        activeIdxs.forEach(function(_wi){
-          var _iso = _pndWeekIsos[_wi];
-          /* Outside the tracked period: not scored, not counted. */
-          if(_iso && !isWeekTracked(_pndScReportId, _iso)) return;
-          var _rec = _iso ? _pndHuddles[_pndScReportId+'__'+_iso] : null;
-          if(_rec && _rec.away) return;                     // Away weeks excluded entirely
-          if(_iso && _pndWeekPending(_pndScReportId, _iso, _rec)) return;  // still open: not scored yet
-          if(!_rec){ _pndAggSum += 0; _pndAggCount++; return; }   // closed and empty counts as 0%
-          var _y=0, _hf=false, _t=0;
-          section.metrics.forEach(function(_mm){
-            _t++;
-            var _v = _mm.readings[_wi];
-            if(_pndIsYes(_v)) _y++;
-            else if(_mm._hard) _hf=true;
-          });
-          var _raw = _t ? Math.round(_y/_t*100) : 0;
-          _pndAggSum += (_hf ? 0 : _raw);
-          _pndAggCount++;
-        });
-        var _pndAgg = _pndAggCount ? Math.round(_pndAggSum/_pndAggCount) : null;
+        /* Aggregate across the visible period via the single-source-of-truth
+           scorer, so this displayed total and the VSP-published total are the
+           same number. activeIdxs maps 1:1 into _pndWeekIsos, and the scorer
+           reads m.readings by the same index, so the visible-week slice is
+           passed straight through. */
+        var _visWeeks = activeIdxs.map(function(_wi){ return { iso:_pndWeekIsos[_wi], idx:_wi }; });
+        var _aggRes = _pndWeeklyScoreAggregate(_pndScReportId, section.metrics, _visWeeks);
+        var _pndAgg = _aggRes.pct;
         var _pndAggColor = _pndAgg==null ? 'var(--txm)' : (_pndAgg>=90 ? '#16a34a' : (_pndAgg>=75 ? '#d97706' : '#dc2626'));
 
         h+='<tr class="pnd-totals-row">';
@@ -9285,7 +9397,8 @@ function _pndExtractStandardsFromScorecard(){
       sec: m.deliverable || 'General',
       hard: !!m._hard,
       std: _pndStripHardTag(m.title),
-      due: m.description || ''
+      due: m.description || '',
+      cadence: (m.cadence==='monthly') ? 'monthly' : 'weekly'
     };
   });
 }
@@ -9486,6 +9599,36 @@ function _pndScReadings(rowId){
   });
 }
 
+/* ---- Monthly readings store ----
+   Weekly answers live in the huddle records. Monthly measurables are their own
+   thing: a plain Yes/No per calendar month, per person, per row. Kept in their
+   own key so the weekly model is untouched. This does NOT change the storage
+   version - it is a new independent key, additive only.
+   Shape: { personId__rowId: { "YEAR-MONTHINDEX": "Yes"|"No" } } */
+var PND_MONTHLY_KEY = 'smb_pnd_monthly_v1';
+function _pndLoadMonthly(){ try{ var v=localStorage.getItem(PND_MONTHLY_KEY); return v?JSON.parse(v):{}; }catch(e){ return {}; } }
+function _pndSaveMonthly(m){ try{ localStorage.setItem(PND_MONTHLY_KEY, JSON.stringify(m||{})); }catch(e){} }
+function _pndMonthlyReadings(rowId){
+  var yr = new Date().getFullYear();
+  var store = _pndLoadMonthly();
+  var rec = store[_pndScReportId+'__'+rowId] || {};
+  var out = [];
+  for(var i=0;i<12;i++){ var v=rec[yr+'-'+i]; out.push((v==='Yes'||v==='No')?v:null); }
+  return out;
+}
+function pndMonthlyCycle(personId, rowId, monthIdx){
+  var yr = new Date().getFullYear();
+  var store = _pndLoadMonthly();
+  var k = personId+'__'+rowId;
+  store[k] = store[k] || {};
+  var key = yr+'-'+monthIdx;
+  var cur = store[k][key];
+  var next = (cur==null||cur==='') ? 'Yes' : (cur==='Yes' ? 'No' : null);
+  if(next==null) delete store[k][key]; else store[k][key] = next;
+  _pndSaveMonthly(store);
+  renderPage();
+}
+
 function _pndBuildScorecardData(person, std, weeksOverride){
   _pndScReportId = person.id;
   if(Array.isArray(weeksOverride) && weeksOverride.length){
@@ -9521,7 +9664,7 @@ function _pndBuildScorecardData(person, std, weeksOverride){
       var _rsMap = _pndLoadRoleStandards();
       if(!Array.isArray(_rsMap[roleKey]) || !_rsMap[roleKey].length){
         _rsMap[roleKey] = effectiveStd.map(function(r){
-          return { id:r.id, sec:r.sec, hard:!!r.hard, std:r.std, due:r.due };
+          return { id:r.id, sec:r.sec, hard:!!r.hard, std:r.std, due:r.due, cadence:(r.cadence==='monthly'?'monthly':'weekly') };
         });
         _pndSaveRoleStandards(_rsMap);
       }
@@ -9539,7 +9682,8 @@ function _pndBuildScorecardData(person, std, weeksOverride){
 
   _pndScMap = {};
   var metrics = stdOrdered.map(function(row, i){
-    _pndScMap[i] = { rowId: row.id, weeks: _pndScWeekIsos.slice() };
+    var _cad = (row.cadence==='monthly') ? 'monthly' : 'weekly';
+    _pndScMap[i] = { rowId: row.id, weeks: _pndScWeekIsos.slice(), cadence:_cad };
     return {
       id: i+1,
       _rowId: row.id,
@@ -9549,8 +9693,8 @@ function _pndBuildScorecardData(person, std, weeksOverride){
       goalType: '=',
       goal: 'Yes',
       rollupAs: 'Average',
-      cadence: 'weekly',
-      readings: _pndScReadings(row.id),
+      cadence: _cad,
+      readings: (_cad==='monthly') ? _pndMonthlyReadings(row.id) : _pndScReadings(row.id),
       notes: {},
       deliverable: row.sec,
       deadline: row.due || '',
@@ -9646,6 +9790,13 @@ function _pndInstallCellClickAdapter(){
     if(!sc) return;
     var m = sc.metrics.find(function(x){ return x.id===metricId; });
     if(!m || m.unit!=='YN') return __pnd_origOpenCellEdit(ownerId, metricId, weekIdx);
+    /* Monthly measurable: the column index is a month, not a week. Store the
+       Yes/No in the monthly store and skip the week-locking / huddle-record
+       path entirely. Cycles empty -> Yes -> No -> empty like the weekly cell. */
+    if(m.cadence==='monthly' && m._rowId){
+      pndMonthlyCycle(personId, m._rowId, weekIdx);
+      return;
+    }
     var cur = m.readings[weekIdx];
     var s = cur==null?null:String(cur).toLowerCase();
     var isYes = (s==='yes'||s==='y'||s==='true'||s==='1');
@@ -9877,7 +10028,8 @@ function _pndTile(label, val, valColor, bg){
     'smb_pnd_tracking_start_v1',
     'smb_pnd_compliance_groups_v1',
     'smb_pnd_lock_tier_v1',
-    'smb_pnd_compliance_bridge_v1'
+    'smb_pnd_compliance_bridge_v1',
+    'smb_pnd_monthly_v1'
   ];
 
   function myVersion(){
