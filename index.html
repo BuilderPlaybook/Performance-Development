@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-24-M3';
+window.PND_BUILD = '2026-07-24-M6';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -7160,7 +7160,7 @@ function renderScorecard(){
     h+='<span style="font-size:var(--fz-lg);font-weight:500">'+_scpName+'</span>';
     h+='<span style="font-size:var(--fz-body);color:var(--txm)">'+section.seat+'</span>';
     
-    h+='<span style="font-size:var(--fz-body);font-weight:500;color:'+(onTrack===section.metrics.length?'#16a34a':'#d97706')+'">'+onTrack+'/'+section.metrics.filter(_inCad).length+' on track</span>';
+    h+='<span style="font-size:var(--fz-body);font-weight:500;color:'+(onTrack===section.metrics.length?'#16a34a':'#dc2626')+'">'+onTrack+'/'+section.metrics.filter(_inCad).length+' on track</span>';
     h+='</div>';
     h+='<div style="display:flex;align-items:center;gap:8px">';
     if(state.scReorder){
@@ -7343,7 +7343,7 @@ function renderScorecard(){
             _mAggSum += (_hf?0:(_t?Math.round(_y/_t*100):0)); _mAggCount++;
           });
           var _mAgg=_mAggCount?Math.round(_mAggSum/_mAggCount):null;
-          var _mAggColor=_mAgg==null?'var(--txm)':(_mAgg>=90?'#16a34a':(_mAgg>=75?'#d97706':'#dc2626'));
+          var _mAggColor=_mAgg==null?'var(--txm)':(_mAgg>=90?'#16a34a':'#dc2626');
           var _mLabel=(period==='quarterly'?'Quarterly Score':(period==='annual'?'Annual Score':'Monthly Score'));
           h+='<tr class="pnd-totals-row">';
           h+='<td colspan="7" style="position:sticky;left:0;z-index:2;background:var(--sur2);padding:10px 14px;color:var(--txt);font-size:var(--fz-body);border-top:2px solid var(--brd);vertical-align:middle"><span style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">'+_mLabel+'</span></td>';
@@ -7358,8 +7358,8 @@ function renderScorecard(){
             });
             if(!_any){ h+='<td style="text-align:center;padding:10px 6px;border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)"><div style="height:20px;line-height:20px;color:var(--txd)">-</div></td>'; return; }
             var _pct=_hf?0:(_t?Math.round(_y/_t*100):0);
-            var _c=_hf?'#dc2626':(_pct>=90?'#16a34a':(_pct>=75?'#d97706':'#dc2626'));
-            var _bg=_hf?'#fee2e2':(_pct>=90?'#d1fae5':(_pct>=75?'#fef3c7':'#fee2e2'));
+            var _c=_hf?'#dc2626':(_pct>=90?'#16a34a':'#dc2626');
+            var _bg=_hf?'#fee2e2':(_pct>=90?'#d1fae5':'#fee2e2');
             h+='<td title="Yes '+_y+' / '+_t+(_hf?' - hard fail':'')+'" style="text-align:center;padding:10px 6px;background:'+_bg+';border-top:2px solid var(--brd);border-right:0.5px solid var(--brd)"><div style="height:20px;line-height:20px;font-weight:700;color:'+_c+'">'+_pct+'%</div></td>';
           });
           h+='</tr>';
@@ -7377,7 +7377,7 @@ function renderScorecard(){
         var _visWeeks = activeIdxs.map(function(_wi){ return { iso:_pndWeekIsos[_wi], idx:_wi }; });
         var _aggRes = _pndWeeklyScoreAggregate(_pndScReportId, section.metrics, _visWeeks);
         var _pndAgg = _aggRes.pct;
-        var _pndAggColor = _pndAgg==null ? 'var(--txm)' : (_pndAgg>=90 ? '#16a34a' : (_pndAgg>=75 ? '#d97706' : '#dc2626'));
+        var _pndAggColor = _pndAgg==null ? 'var(--txm)' : (_pndAgg>=90 ? '#16a34a' : '#dc2626');
 
         h+='<tr class="pnd-totals-row">';
         /* Label spans the 7 descriptive/frozen columns (cb, trend, rd, title, deadline, goal, avg). */
@@ -7435,8 +7435,8 @@ function renderScorecard(){
           });
           var _raw = _total ? Math.round(_yes/_total*100) : 0;
           var _pct = _hardFail ? 0 : _raw;
-          var _c = _hardFail ? '#dc2626' : (_pct>=90 ? '#16a34a' : (_pct>=75 ? '#d97706' : '#dc2626'));
-          var _bg = _hardFail ? '#fee2e2' : (_pct>=90 ? '#d1fae5' : (_pct>=75 ? '#fef3c7' : '#fee2e2'));
+          var _c = _hardFail ? '#dc2626' : (_pct>=90 ? '#16a34a' : '#dc2626');
+          var _bg = _hardFail ? '#fee2e2' : (_pct>=90 ? '#d1fae5' : '#fee2e2');
           h+='<td title="Yes '+_yes+' / '+_total+(_hardFail?' - hard fail':'')+'" style="text-align:center;padding:10px 6px;background:'+_bg+';border-top:2px solid var(--brd);border-right:0.5px solid var(--brd);vertical-align:top">'+
                '<div style="'+_pndValLine+';color:'+_c+'">'+_pct+'%</div>'+
                '<div style="'+_pndActLine+'"><button type="button" onclick="pndToggleAway(\''+_iso+'\')" title="Holiday, sick, etc - excludes this week" style="padding:1px 6px;border:1px solid transparent;background:transparent;color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit;opacity:.6" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--brd)\';this.style.background=\'var(--sur)\'" onmouseout="this.style.opacity=.6;this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">Mark Away</button><button type="button" onclick="event.stopPropagation();pndClearWeek(\''+_iso+'\')" title="Empty every answer in this week" style="margin-left:6px;padding:1px 6px;border:1px solid transparent;background:transparent;color:var(--txm);font-size:var(--fz-xs);border-radius:3px;cursor:pointer;font-family:inherit;opacity:.6" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--brd)\';this.style.background=\'var(--sur)\'" onmouseout="this.style.opacity=.6;this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">Clear</button></div>'+
@@ -7811,7 +7811,7 @@ function _scTier(m,val){
   if(val===null||val===undefined||val==='')return null;
   if(m && m.unit==='YN'){
     if(typeof val==='string'){ var s=val.trim().toLowerCase(); if(s==='')return null; return (s==='yes'||s==='y'||s==='true'||s==='1')?'green':'red'; }
-    var p=Number(val); if(!isFinite(p))return null; return p>=95?'green':p>=85?'amber':'red';
+    var p=Number(val); if(!isFinite(p))return null; return p>=90?'green':'red';
   }
   if(m && (m.goalType==='inside'||m.goalType==='outside')){
     var _lo=Number(m.goalMin),_hi=Number(m.goalMax),_x=Number(val);
@@ -8536,6 +8536,28 @@ function saveEditMeasurable(){
 
   if(!title||!title.value.trim()){alert('Title is required.');return;}
 
+  /* Apply the hard-fail toggle and clean title first, and persist them to the
+     role standard immediately, keyed by _rowId. Done up front so that even if
+     later logic throws (it is wrapped in a try by the save wrapper), the hard
+     flag and title still stick. The badge is regenerated from the flag, never
+     baked into the editable text. */
+  var _emHard=document.getElementById('em-hard');
+  metric._hard=!!(_emHard&&_emHard.checked);
+  var _cleanTitle=title.value.trim();
+  var _badge=metric._hard ? '<div style="margin-bottom:5px"><span style="display:inline-block;background:#dc2626;color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Hard Fail if not Yes</span></div>' : '';
+  metric.title=_badge+_cleanTitle;
+  try{
+    if(metric._rowId){
+      var _rsMapH=_pndLoadRoleStandards();
+      Object.keys(_rsMapH).forEach(function(_role){
+        (_rsMapH[_role]||[]).forEach(function(_r){
+          if(_r.id===metric._rowId){ _r.hard=metric._hard; _r.std=_cleanTitle; }
+        });
+      });
+      _pndSaveRoleStandards(_rsMapH);
+    }
+  }catch(e){}
+
   var orientMap={
     'Greater than or equal to goal':'\u2265','Greater than goal':'>','Equal to goal':'=',
     'Less than goal':'<','Less than or equal to goal':'\u2264',
@@ -8555,7 +8577,9 @@ function saveEditMeasurable(){
     metric.owner=scorecard[newIdx].ownerId;
   }
 
-  metric.title=title.value.trim();
+  /* Title is stored clean; the hard-fail badge is regenerated from the toggle
+     so it never gets baked into the editable text. _hard drives scoring and the
+     extractor persists it as the standard's hard flag. */
   metric.description=desc?desc.value:'';
   metric.goal=(unitType==='Yes/No')?'Yes':(parseFloat(val?val.value:0)||0);
   var _emW=document.getElementById('em-watch'); metric.watch=(_emW&&_emW.value.trim()!=='')?parseFloat(_emW.value):undefined;
@@ -9086,10 +9110,20 @@ function renderEditMeasurableOverlay(){
       // Scrollable body
       h+='<div style="flex:1;overflow-y:auto;padding:20px">';
 
-      // Title
+      // Title (clean standard text only - the hard-fail badge is a separate
+      // toggle below, not baked into the title string).
       h+='<div style="margin-bottom:16px">';
       h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Title <span style="color:#dc2626">*</span></label>';
-      h+='<input id="em-title" value="'+epMetric.title.replace(/"/g,'&quot;')+'" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;box-sizing:border-box" />';
+      h+='<textarea id="em-title" rows="2" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;box-sizing:border-box;resize:vertical">'+_pndStripHardTag(epMetric.title).replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea>';
+      h+='</div>';
+
+      // Hard Fail toggle - a No on this line forces the whole week to 0%.
+      h+='<div style="margin-bottom:16px;padding:12px;border:1px solid var(--brd2);border-radius:8px;background:var(--sur2)">';
+      h+='<label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer">';
+      h+='<input type="checkbox" id="em-hard"'+(epMetric._hard?' checked':'')+' style="margin-top:2px;width:16px;height:16px;cursor:pointer" />';
+      h+='<span><span style="font-size:var(--fz-body);font-weight:600;color:var(--txt)">Hard Fail if not Yes</span>';
+      h+='<div style="font-size:var(--fz-xs);color:var(--txm);margin-top:3px">A No on this line forces the whole week to 0%, regardless of the other lines. Use for non-negotiable rules.</div></span>';
+      h+='</label>';
       h+='</div>';
 
       // Role Deliverable (P&D addition; the category column in the scorecard grid).
