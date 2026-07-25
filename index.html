@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-24-M6';
+window.PND_BUILD = '2026-07-24-M16';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -7143,7 +7143,10 @@ function renderScorecard(){
   colData.forEach(function(d,di){
     if(state.scMerged) return;
     var section=d.section;
-    var _scOrder=_scMetricOrder(section); if(_scOrder.length===0 && section.metrics && section.metrics.length>0) return;
+    /* Do NOT skip a section that is empty for the active period but has metrics
+       in other cadences - the header and + New Measurable button must render so
+       the first monthly/quarterly line can be added. */
+    var _scOrder=_scMetricOrder(section);
     var onTrack=section.metrics.filter(function(m){return _inCad(m)&&isOnTrack(m,_metricLatest(m));}).length;
     var isCollapsed=!!state.collapsedSections['sec'+di];
     var isLastCol=colLabels.length-1;
@@ -7215,7 +7218,7 @@ function renderScorecard(){
       function scStkB(left,w,bg,extra){
         return 'position:sticky;left:'+left+'px;z-index:2;background:'+bg+';min-width:'+w+'px;width:'+w+'px;'+(extra||'');
       }
-      h+='<div style="overflow-x:auto;position:relative"><table class="tbl" style="border-collapse:separate;border-spacing:0">';
+      h+='<div style="overflow-x:auto;position:relative"><table class="tbl" style="border-collapse:separate;border-spacing:0;width:100%">';
       h+='<thead><tr>';
       // Select-all checkbox in header
       h+='<th style="'+scStkH(SC_OFF.cb,SC_W.cb,'text-align:center')+'">';
@@ -7606,7 +7609,12 @@ function renderScorecard(){
 
     var nmPre=state.newMeasurablePanel.prefill;
 
-    // Construction KPI Library picker
+    // Construction KPI Library picker. This benchmark library is prototype data
+    // not present in this build (KPI_STREAMS / KPI_PILLAR_ORDER /
+    // CONSTRUCTION_KPI_LIBRARY are undefined), so render it only when the data
+    // exists. P&D builds custom YN standards via the form below.
+    var _kpiLibReady = (typeof CONSTRUCTION_KPI_LIBRARY!=='undefined' && typeof KPI_PILLAR_ORDER!=='undefined');
+    if(_kpiLibReady){
     h+='<div style="margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--brd)">';
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
     h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);text-transform:uppercase;letter-spacing:.05em">Construction KPI Library</label>';
@@ -7620,17 +7628,28 @@ function renderScorecard(){
       h+='<div id="nm-lib-list" style="max-height:240px;overflow-y:auto;padding-right:4px">'+renderKpiLibList()+'</div>';
     }
     h+='</div>';
+    }
 
     // Title
     h+='<div style="margin-bottom:16px">';
     h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Title <span style="color:#dc2626">*</span></label>';
-    h+='<input id="nm-title" placeholder="e.g. Active Client Leads" value="'+(nmPre?nmPre.title.replace(/"/g,'&quot;'):'')+'" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;box-sizing:border-box" />';
+    h+='<textarea id="nm-title" rows="2" placeholder="e.g. Active Client Leads" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;box-sizing:border-box;resize:vertical">'+(nmPre?_pndStripHardTag(nmPre.title).replace(/</g,'&lt;').replace(/>/g,'&gt;'):'')+'</textarea>';
     h+='</div>';
 
-    // Description
+    // Hard Fail toggle - a No on this line forces the whole period to 0%.
+    h+='<div style="margin-bottom:16px;padding:12px;border:1px solid var(--brd2);border-radius:8px;background:var(--sur2)">';
+    h+='<label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer">';
+    h+='<input type="checkbox" id="nm-hard" style="margin-top:2px;width:16px;height:16px;cursor:pointer" />';
+    h+='<span><span style="font-size:var(--fz-body);font-weight:600;color:var(--txt)">Hard Fail if not Yes</span>';
+    h+='<div style="font-size:var(--fz-xs);color:var(--txm);margin-top:3px">A No on this line forces the whole period to 0%, regardless of the other lines. Use for non-negotiable rules.</div></span>';
+    h+='</label>';
+    h+='</div>';
+
+    // Deadline (renders in the scorecard's Deadline column).
     h+='<div style="margin-bottom:16px">';
-    h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Description <span style="color:var(--txd);font-weight:400">(Optional)</span></label>';
-    h+='<textarea id="nm-desc" data-autogrow="1" oninput="_vspAutogrow(this)" placeholder="Add a description..." style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-lg);font-family:inherit;resize:none;overflow:hidden;min-height:64px;box-sizing:border-box">'+(nmPre?nmPre.desc:'')+'</textarea>';
+    h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Deadline <span style="color:var(--txd);font-weight:400">(Optional)</span></label>';
+    h+='<textarea id="nm-desc" data-autogrow="1" oninput="_vspAutogrow(this)" placeholder="e.g. Monday by 6:00pm, or end of Q3" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-lg);font-family:inherit;resize:none;overflow:hidden;min-height:64px;box-sizing:border-box">'+(nmPre?nmPre.desc:'')+'</textarea>';
+    h+='<div style="font-size:var(--fz-xs);color:var(--txm);margin-top:5px">Shows in the Deadline column. Dates, week references, or free text all work.</div>';
     h+='</div>';
 
     // Owner + Seat (resolves to a group; auto-creates one if none matches)
@@ -7917,7 +7936,12 @@ function _renderWeekCell(m, val, weekIdx, ownerId, bgRow, isWeekly, goalOverride
   var hasNote = m.notes && m.notes[weekIdx];
   var noteDot = hasNote ? '<span style="position:absolute;top:0;right:0;width:0;height:0;border-top:12px solid var(--blu);border-left:12px solid transparent;pointer-events:none"></span>' : '';
   var isAuto = !!m.auto;
-  var clickHandler = (isWeekly && !isAuto)
+  /* A monthly Yes/No cell should toggle its value like a weekly cell, not open
+     the edit panel. openCellEdit routes monthly-cadence YN clicks to
+     pndMonthlyCycle. So allow the cell-toggle handler for weekly OR monthly YN
+     measurables; only non-YN or auto-fed cells open the edit panel. */
+  var _cellToggles = (!isAuto) && (isWeekly || (m.cadence==='monthly' && m.unit==='YN'));
+  var clickHandler = _cellToggles
     ? "openCellEdit('"+ownerId+"',"+m.id+","+weekIdx+")"
     : "openEditMeasurable('"+ownerId+"',"+m.id+")";
   var autoBadge = isAuto ? '<span title="Auto-fed, read-only" style="position:absolute;top:2px;left:3px;font-size:var(--fz-xs);font-weight:700;color:var(--txm);line-height:1">A</span>' : '';
@@ -7957,11 +7981,12 @@ function _renderYNGauge(m){
   var total = yes + no;
   if(total === 0) return _renderNoDataBar('No Yes/No readings yet');
   var pct = (yes/total)*100;
-  // Tier: 95%+ green, 85%+ amber, else red. Tight thresholds since YN is binary.
-  var tier = pct >= 95 ? 'green' : pct >= 85 ? 'amber' : 'red';
-  var tierVar = tier==='green' ? 'var(--grn)' : tier==='amber' ? 'var(--amb)' : 'var(--red)';
-  var bgTint = tier==='green' ? '#dcfce7' : tier==='amber' ? '#fef3c7' : '#fee2e2';
-  var tooltip = yes+' of '+total+' weeks Yes (goal: 100% Yes)';
+  // Target 90%: green at or above, red below. Two colors only, matching the
+  // rest of the performance scorecard.
+  var tier = pct >= 90 ? 'green' : 'red';
+  var tierVar = tier==='green' ? 'var(--grn)' : 'var(--red)';
+  var bgTint = tier==='green' ? '#dcfce7' : '#fee2e2';
+  var tooltip = yes+' of '+total+' Yes (goal: 100% Yes)';
   var h = '<div title="'+tooltip+'" style="position:relative;height:8px;background:'+bgTint+';border-radius:4px;margin-top:6px;overflow:visible">';
   h += '<div style="position:absolute;left:0;top:0;bottom:0;width:'+pct.toFixed(1)+'%;background:'+tierVar+';border-radius:4px 0 0 4px"></div>';
   h += '<div title="Goal" style="position:absolute;left:100%;top:-2px;bottom:-2px;width:2px;background:var(--sb);transform:translateX(-2px)"></div>';
@@ -8083,10 +8108,8 @@ function _renderKeepAtZeroGauge(m){
 }
 
 function _renderNoDataBar(reason){
-  // Solid amber bar - "this metric needs setup" warning state.
-  // Same visual language as a maxed-out amber bar so the gauge column
-  // reads consistently across the scorecard (no stripes, no special
-  // patterns). The label below the bar carries the "why" detail.
+  // Gold "no data yet / needs setup" bar, matching VSP's no-readings state so
+  // empty rows look identical across scorecards.
   return '<div title="'+reason+'" style="position:relative;height:8px;background:#fef3c7;border-radius:4px;margin-top:6px;overflow:visible">'
     + '<div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--amb);border-radius:4px"></div>'
     + '</div>'
@@ -8436,6 +8459,9 @@ function _scConvReadings(readings, oldCad, newCad, m){
   return _cadNulls(newCad);
 }
 
+/* Reading-array length for a cadence. Weekly mirrors the 52-week scaffold;
+   monthly is 12; quarterly is 4. */
+function _cadLen(cad){ return cad==='monthly' ? 12 : (cad==='quarterly' ? 4 : 52); }
 function _cadNulls(cad){ var a=[],N=_cadLen(cad); for(var i=0;i<N;i++)a.push(null); return a; }
 function scLastDataIdx(){
   var mx=0, found=false;
@@ -8544,6 +8570,9 @@ function saveEditMeasurable(){
   var _emHard=document.getElementById('em-hard');
   metric._hard=!!(_emHard&&_emHard.checked);
   var _cleanTitle=title.value.trim();
+  var _emDeadline=desc?desc.value:'';
+  metric.description=_emDeadline;
+  metric.deadline=_emDeadline;
   var _badge=metric._hard ? '<div style="margin-bottom:5px"><span style="display:inline-block;background:#dc2626;color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Hard Fail if not Yes</span></div>' : '';
   metric.title=_badge+_cleanTitle;
   try{
@@ -8551,7 +8580,7 @@ function saveEditMeasurable(){
       var _rsMapH=_pndLoadRoleStandards();
       Object.keys(_rsMapH).forEach(function(_role){
         (_rsMapH[_role]||[]).forEach(function(_r){
-          if(_r.id===metric._rowId){ _r.hard=metric._hard; _r.std=_cleanTitle; }
+          if(_r.id===metric._rowId){ _r.hard=metric._hard; _r.std=_cleanTitle; _r.due=_emDeadline; }
         });
       });
       _pndSaveRoleStandards(_rsMapH);
@@ -8634,6 +8663,27 @@ function deleteEditMeasurable(){
   renderPage();
 }
 
+/* Resolve which scorecard section a measurable belongs in, from the owner/seat
+   picker values. Owner value is a person's initials (section.ownerId); seat is
+   the role label. Falls back to the panel's originating section index. */
+function _resolveSectionByOwnerSeat(ownerVal, seatVal, fallbackIdx){
+  var fb = (typeof fallbackIdx==='number' && fallbackIdx>=0 && fallbackIdx<scorecard.length) ? fallbackIdx : 0;
+  if(!ownerVal) return fb;
+  var owner = String(ownerVal).trim();
+  var seat = seatVal ? String(seatVal).trim() : '';
+  var exact = -1, ownerOnly = -1;
+  for(var i=0;i<scorecard.length;i++){
+    var s = scorecard[i];
+    if(s.ownerId===owner){
+      if(ownerOnly<0) ownerOnly = i;
+      if(seat && (s.seat||'')===seat){ exact = i; break; }
+    }
+  }
+  if(exact>=0) return exact;
+  if(ownerOnly>=0) return ownerOnly;
+  return fb;
+}
+
 function openNewMeasurable(sectionIdx){
   state.newMeasurablePanel={open:true,sectionIdx:sectionIdx,prefill:null,libSearch:''};
   renderPage();
@@ -8650,6 +8700,13 @@ function saveNewMeasurable(){
   var showAvg=document.getElementById('nm-showAvg');
   var showGoal=document.getElementById('nm-showGoal');
   if(!title||!title.value.trim()){alert('Title is required.');return;}
+  /* Hard-fail toggle: store the clean title plus a regenerated badge, and set
+     _hard so scoring and the extractor treat it as a priority rule. */
+  var _nmHard=document.getElementById('nm-hard');
+  var _nmIsHard=!!(_nmHard&&_nmHard.checked);
+  var _nmClean=title.value.trim();
+  var _nmBadge=_nmIsHard ? '<div style="margin-bottom:5px"><span style="display:inline-block;background:#dc2626;color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Hard Fail if not Yes</span></div>' : '';
+  var _nmTitle=_nmBadge+_nmClean;
   // Map orientation rule to goalType symbol
   var orientMap={
     'Greater than or equal to goal':'\u2265',
@@ -8667,7 +8724,8 @@ function saveNewMeasurable(){
   var goalVal=(unitType==='Yes/No')?'Yes':(parseFloat(val?val.value:0)||0);
   var newMetric={
     id:Date.now(),
-    title:title.value.trim(),
+    title:_nmTitle,
+    _hard:_nmIsHard,
     description:desc?desc.value:'',
     owner:null,
     goal:goalVal,
@@ -8696,6 +8754,21 @@ function saveNewMeasurable(){
   var targetIdx=_resolveSectionByOwnerSeat(_nmOwnerEl?_nmOwnerEl.value:'', _nmSeatEl?_nmSeatEl.value:'', state.newMeasurablePanel.sectionIdx);
   var section=scorecard[targetIdx];
   if(section){ newMetric.owner=section.ownerId; section.metrics.push(newMetric); }
+  /* Persist to the role standard before renderPage rebuilds from storage, or the
+     just-added metric is dropped (it was only in memory). */
+  try{
+    if(section){
+      var _npPerson=null;
+      (people()||[]).forEach(function(pp){ if(pp.initials===section.ownerId || pp.id===section.ownerId) _npPerson=pp; });
+      var _npRole=_npPerson ? (_npPerson.roleLabel||'Role') : _pndCurRole;
+      if(_npRole){
+        if(!newMetric._rowId) newMetric._rowId='r'+Date.now()+'_'+Math.floor(Math.random()*1e4);
+        var _npMap=_pndLoadRoleStandards();
+        _npMap[_npRole]=_pndExtractStandardsFromScorecard();
+        _pndSaveRoleStandards(_npMap);
+      }
+    }
+  }catch(e){}
   state.newMeasurablePanel={open:false,sectionIdx:null};
   renderPage();
 }
@@ -8974,7 +9047,7 @@ function renderKpiLibList(){
   out+='<div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px;flex-wrap:wrap">';
   out+='<span style="font-size:var(--fz-xs);color:var(--txm);text-transform:uppercase;letter-spacing:.06em">Benchmark stream</span>';
   out+='<select onchange="state.newMeasurablePanel.benchStream=this.value;var el=document.getElementById(\'nm-lib-list\');if(el)el.innerHTML=renderKpiLibList()" style="padding:5px 8px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;background:var(--sur)">';
-  KPI_STREAMS.forEach(function(_s){ out+='<option value="'+_s.id+'"'+(_s.id===bs?' selected':'')+'>'+_s.name+'</option>'; });
+  (typeof KPI_STREAMS!=='undefined' && Array.isArray(KPI_STREAMS) ? KPI_STREAMS : [{id:'customNL',name:'Custom'}]).forEach(function(_s){ out+='<option value="'+_s.id+'"'+(_s.id===bs?' selected':'')+'>'+_s.name+'</option>'; });
   out+='</select>';
   // Placeholder: annual benchmark refresh editor (stub - see roadmap)
   out+='<button onclick="alert(\'Benchmark editor - coming soon.\\n\\nLets an admin update the industry benchmark numbers per stream each year from your NAHB / CFMA report copies, versioned by year. No code change needed.\')" style="margin-left:auto;font-size:var(--fz-xs);font-weight:600;color:var(--blu);background:none;border:1px solid var(--brd);border-radius:6px;padding:5px 9px;cursor:pointer;font-family:inherit">Edit benchmarks</button>';
@@ -9127,22 +9200,39 @@ function renderEditMeasurableOverlay(){
       h+='</div>';
 
       // Role Deliverable (P&D addition; the category column in the scorecard grid).
-      // Datalist gives autocomplete of existing categories while still allowing any typed value.
-      var _pndCats={}; (scorecard[0].metrics||[]).forEach(function(_x){ if(_x.deliverable) _pndCats[_x.deliverable]=1; });
-      var _pndCurRD=(epMetric.deliverable||'').replace(/"/g,'&quot;');
+      // A real <select> dropdown listing every deliverable category from this
+      // person's full role standards (weekly + monthly), so it works on the
+      // Monthly tab. An "Add new category" option reveals a text input.
+      var _pndCats={};
+      (scorecard[0].metrics||[]).forEach(function(_x){ if(_x.deliverable) _pndCats[_x.deliverable]=1; });
+      _pndDeliverableCategories().forEach(function(_c){ _pndCats[_c]=1; });
+      var _pndCurRDraw=(epMetric.deliverable||'');
+      if(_pndCurRDraw) _pndCats[_pndCurRDraw]=1;
+      var _pndCatList=Object.keys(_pndCats).sort();
+      var _escAttr=function(x){ return String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
       h+='<div style="margin-bottom:16px">';
       h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Role Deliverable</label>';
-      h+='<input id="em-rd" list="em-rd-list" value="'+_pndCurRD+'" placeholder="e.g. Financial Control" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;box-sizing:border-box" />';
-      h+='<datalist id="em-rd-list">';
-      Object.keys(_pndCats).sort().forEach(function(_c){ h+='<option value="'+_c.replace(/"/g,'&quot;')+'"></option>'; });
-      h+='</datalist>';
-      h+='<div style="font-size:var(--fz-xs);color:var(--txm);margin-top:5px">Groups this measurable under a Role Deliverable in the scorecard. Pick an existing one or type a new category.</div>';
+      h+='<select id="em-rd-select" onchange="_pndRdSelectChange(this)" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;background:var(--sur);box-sizing:border-box">';
+      _pndCatList.forEach(function(_c){
+        var sel=(_c===_pndCurRDraw)?' selected':'';
+        h+='<option value="'+_escAttr(_c)+'"'+sel+'>'+_escAttr(_c)+'</option>';
+      });
+      h+='<option value="__ADD_NEW__">+ Add new category...</option>';
+      h+='</select>';
+      // Hidden text input that mirrors the chosen category (em-rd is the value the
+      // save reads). Shown only when "Add new category" is picked.
+      var _showNew = (!_pndCurRDraw);
+      h+='<input id="em-rd" type="hidden" value="'+_escAttr(_pndCurRDraw||(_pndCatList[0]||'General'))+'" />';
+      h+='<input id="em-rd-new" oninput="_pndRdNewInput(this)" placeholder="Type a new category name" value="" style="width:100%;margin-top:8px;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-body);font-family:inherit;box-sizing:border-box;display:'+(_showNew?'block':'none')+'" />';
+      h+='<div style="font-size:var(--fz-xs);color:var(--txm);margin-top:5px">Groups this measurable under a Role Deliverable in the scorecard. Pick one from the list or add a new category.</div>';
       h+='</div>';
 
-      // Description
+      // Deadline (renders in the scorecard's Deadline column). Stored on the
+      // metric as description/due for backward compatibility.
       h+='<div style="margin-bottom:16px">';
-      h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Description <span style="color:var(--txd);font-weight:400">(Optional)</span></label>';
-      h+='<textarea id="em-desc" data-autogrow="1" oninput="_vspAutogrow(this)" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-lg);font-family:inherit;resize:none;overflow:hidden;min-height:64px;box-sizing:border-box">'+(epMetric.description||'')+'</textarea>';
+      h+='<label style="font-size:var(--fz-body);font-weight:600;color:var(--txm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Deadline <span style="color:var(--txd);font-weight:400">(Optional)</span></label>';
+      h+='<textarea id="em-desc" data-autogrow="1" oninput="_vspAutogrow(this)" placeholder="e.g. Monday by 6:00pm, or end of Q3" style="width:100%;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:6px;font-size:var(--fz-lg);font-family:inherit;resize:none;overflow:hidden;min-height:64px;box-sizing:border-box">'+(epMetric.description||'')+'</textarea>';
+      h+='<div style="font-size:var(--fz-xs);color:var(--txm);margin-top:5px">Shows in the Deadline column so the manager and report agree on when the item was due. Dates, week references, or free text all work.</div>';
       h+='</div>';
 
       // Data entry - automatic vs manual. Standard on every measurable: the
@@ -9410,6 +9500,39 @@ function _pndSaveHuddles(m){ try{ localStorage.setItem('smb_perf_huddles_v1', JS
    Access rule: whoever passes the module gate (supervisor OR hr) is admin,
    consistent with how the rest of the module treats "make changes". */
 function _pndLoadRoleStandards(){ try{ var v=localStorage.getItem('smb_perf_role_standards_v1'); return v?JSON.parse(v):{}; }catch(e){ return {}; } }
+/* Role Deliverable dropdown handlers. The <select> drives a hidden #em-rd input
+   (the value the save reads). Choosing "Add new category" reveals a text box
+   whose typed value becomes the deliverable. */
+function _pndRdSelectChange(sel){
+  var hid=document.getElementById('em-rd');
+  var box=document.getElementById('em-rd-new');
+  if(sel.value==='__ADD_NEW__'){
+    if(box){ box.style.display='block'; box.focus(); if(hid) hid.value=box.value.trim(); }
+  } else {
+    if(box){ box.style.display='none'; }
+    if(hid) hid.value=sel.value;
+  }
+}
+function _pndRdNewInput(box){
+  var hid=document.getElementById('em-rd');
+  if(hid) hid.value=String(box.value||'').trim();
+}
+/* Every distinct Role Deliverable category available for the datalist. Leads
+   with the current person's own role standards (weekly + monthly) so their
+   weekly deliverables show on the Monthly tab, then adds categories from every
+   other role so a new one is easy to reuse. */
+function _pndDeliverableCategories(){
+  var map = _pndLoadRoleStandards();
+  var seen = {}, out = [];
+  function add(sec){ if(sec && !seen[sec]){ seen[sec]=1; out.push(sec); } }
+  var curRole = _pndCurRole;
+  if(curRole && Array.isArray(map[curRole])) map[curRole].forEach(function(r){ add(r.sec); });
+  Object.keys(map).forEach(function(role){
+    if(role===curRole) return;
+    (map[role]||[]).forEach(function(r){ add(r.sec); });
+  });
+  return out;
+}
 function _pndSaveRoleStandards(m){ try{ localStorage.setItem('smb_perf_role_standards_v1', JSON.stringify(m)); }catch(e){} }
 
 /* Reverse-map: given the current scorecard[0].metrics (which VSP mutates on
@@ -9941,7 +10064,12 @@ function renderScorecardPND(person, std, opts){
   _pndInstallCellClickAdapter();
   _pndWrapVSPSaves();       /* wire admin edits to persist per-role */
   var html = renderScorecard();
-  html += _pndRenderWeeklyScoreSummary(std);
+  /* The Hard Fail Rules banner reads the current WEEK's readings and lists the
+     weekly priority rules, so it belongs only on the Weekly tab. On Monthly and
+     Quarterly it would show weekly data out of context, so skip it there. */
+  if((state.scorecardPeriod||'weekly')==='weekly'){
+    html += _pndRenderWeeklyScoreSummary(std);
+  }
   /* Overlay HTML has stable element IDs (em-*, ng-*, eg-*). Only include it
      on the primary rendering to avoid duplicate IDs when a page renders
      multiple scorecards (rotating-role stacked view). */
