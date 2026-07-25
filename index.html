@@ -2037,6 +2037,49 @@ function _pndWriteComplianceBridge(){
     localStorage.setItem(PND_BRIDGE_KEY, JSON.stringify(out));
   }catch(e){}
 }
+/* Huddle-scores bridge. VSP runs as a separate deployed page and cannot call
+   SMB_PND_HUDDLES.statusFor / weeklyScoreSummary (those live only in this
+   page). So publish their computed output to a synced key VSP reads verbatim,
+   exactly as _pndWriteComplianceBridge publishes compliance. P&D stays the sole
+   writer and the sole place a huddle score is ever computed. The open week is
+   carried as pct:null (statusFor already returns null for it), so VSP shows a
+   dash there instead of recomputing a red 0 percent.
+
+   Shape at smb_pnd_huddle_scores_v1:
+     { v:1, tenantId:'lida-001', updatedAt:<iso>,
+       people: { <personId>: {
+         weeks:   { '<weekIso>': { status, pct:<number|null>, hardFail } },
+         summary: { pct:<number|null>, weeksCounted } } } } */
+function _pndWriteHuddleScoresBridge(){
+  try{
+    var api = window.SMB_PND_HUDDLES;
+    if(!api || typeof api.statusFor !== 'function') return;
+    var out = { v:1, tenantId:'lida-001', updatedAt:new Date().toISOString(), people:{} };
+    var monday = mondayOf(new Date());
+    people().forEach(function(p){
+      if(!p || !p.id) return;
+      var weeks = {};
+      var d = new Date(monday.getTime());
+      for(var k=0; k<PND_BRIDGE_WEEKS_BACK; k++){
+        var iso = isoDate(d);
+        if(iso < PND_BRIDGE_FIRST_WEEK) break;              /* never reach before the floor */
+        var s = null;
+        try{ s = api.statusFor(p.id, iso); }catch(e){}
+        if(s){
+          weeks[iso] = { status:s.status, pct:(s.pct==null?null:s.pct), hardFail:!!s.hardFail };
+        }
+        d = _pndPrevWeek(d);
+      }
+      var summ = null;
+      try{ summ = api.weeklyScoreSummary(p.id); }catch(e){}
+      out.people[p.id] = {
+        weeks: weeks,
+        summary: summ ? { pct:(summ.pct==null?null:summ.pct), weeksCounted:summ.weeksCounted } : { pct:null, weeksCounted:0 }
+      };
+    });
+    localStorage.setItem('smb_pnd_huddle_scores_v1', JSON.stringify(out));
+  }catch(e){}
+}
 /* Retired: the flat feed keys wrote a closed week's value into VSP's current
    week column. Any stale keys left in a loaded page are cleared so nothing
    downstream can pick up the wrong-column version. */
@@ -6100,7 +6143,8 @@ var PND_BACKUP_KEYS = [
   'smb_pnd_compliance_groups_v1',
   'smb_pnd_lock_tier_v1',
   'smb_pnd_compliance_bridge_v1',
-  'smb_pnd_monthly_v1'
+  'smb_pnd_monthly_v1',
+  'smb_pnd_huddle_scores_v1'
 ];
 /* Device-local, never carried between browsers. Literals rather than the
    constants, because PND_DEVICE_USER_KEY is declared further down the file
@@ -6279,6 +6323,7 @@ function pndCommitRestore(){
   try{ _pndInvalidateTrackingCache(); }catch(e){}
   try{ emitPndSignals(); }catch(e){}
   try{ _pndWriteComplianceBridge(); }catch(e){}
+  try{ _pndWriteHuddleScoresBridge(); }catch(e){}
   toast('Restored '+written+' data sets.');
   renderPage();
 }
@@ -6299,6 +6344,7 @@ function pndUndoRestore(){
   try{ _pndInvalidateTrackingCache(); }catch(e){}
   try{ emitPndSignals(); }catch(e){}
   try{ _pndWriteComplianceBridge(); }catch(e){}
+  try{ _pndWriteHuddleScoresBridge(); }catch(e){}
   toast('Undone. '+n+' data sets put back.');
   renderPage();
 }
@@ -6431,6 +6477,7 @@ function emitPndSignals(){
   _pndInvalidateTrackingCache();
   _pndPublishComplianceFeed();
   _pndWriteComplianceBridge();               /* closed weeks only, read by VSP */
+  try{ _pndWriteHuddleScoresBridge(); }catch(e){}  /* per-person huddle scores, read by VSP */
   var reps = myReports();
   var attention=[], exceptions=[], hardFails=0, redWeeks=0, done=0;
   var thisWeek = isoDate(mondayOf(new Date()));
@@ -10191,7 +10238,8 @@ function _pndTile(label, val, valColor, bg){
     'smb_pnd_compliance_groups_v1',
     'smb_pnd_lock_tier_v1',
     'smb_pnd_compliance_bridge_v1',
-    'smb_pnd_monthly_v1'
+    'smb_pnd_monthly_v1',
+    'smb_pnd_huddle_scores_v1'
   ];
 
   function myVersion(){
