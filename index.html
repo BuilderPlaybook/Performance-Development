@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-25-M17';
+window.PND_BUILD = '2026-07-25-M18';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -2078,6 +2078,22 @@ function _pndWriteHuddleScoresBridge(){
       };
     });
     localStorage.setItem('smb_pnd_huddle_scores_v1', JSON.stringify(out));
+  }catch(e){}
+}
+/* Pre-BOSHR people-map shim. VSP seeds different person IDs than P&D, so VSP
+   needs a way to translate its person to P&D's id when reading huddle data.
+   Publishes an initials<->id map to localStorage for the same-origin hand-off.
+   Retires at the BOSHR People Registry cutover (D-98). */
+function _pndWritePeopleMapShim(){
+  try{
+    var idByIni={}, iniById={};
+    (people()||[]).forEach(function(p){
+      if(!p) return;
+      if(p.initials){ idByIni[p.initials]=p.id; }
+      if(p.id){ iniById[p.id]=p.initials||''; }
+    });
+    var out={ v:1, tenantId:'lida-001', updatedAt:new Date().toISOString(), idByIni:idByIni, iniById:iniById };
+    localStorage.setItem('smb_pnd_people_map_v1', JSON.stringify(out));
   }catch(e){}
 }
 /* Retired: the flat feed keys wrote a closed week's value into VSP's current
@@ -6144,7 +6160,8 @@ var PND_BACKUP_KEYS = [
   'smb_pnd_lock_tier_v1',
   'smb_pnd_compliance_bridge_v1',
   'smb_pnd_monthly_v1',
-  'smb_pnd_huddle_scores_v1'
+  'smb_pnd_huddle_scores_v1',
+  'smb_pnd_people_map_v1'
 ];
 /* Device-local, never carried between browsers. Literals rather than the
    constants, because PND_DEVICE_USER_KEY is declared further down the file
@@ -6324,6 +6341,7 @@ function pndCommitRestore(){
   try{ emitPndSignals(); }catch(e){}
   try{ _pndWriteComplianceBridge(); }catch(e){}
   try{ _pndWriteHuddleScoresBridge(); }catch(e){}
+  try{ _pndWritePeopleMapShim(); }catch(e){}
   toast('Restored '+written+' data sets.');
   renderPage();
 }
@@ -6345,6 +6363,7 @@ function pndUndoRestore(){
   try{ emitPndSignals(); }catch(e){}
   try{ _pndWriteComplianceBridge(); }catch(e){}
   try{ _pndWriteHuddleScoresBridge(); }catch(e){}
+  try{ _pndWritePeopleMapShim(); }catch(e){}
   toast('Undone. '+n+' data sets put back.');
   renderPage();
 }
@@ -6478,6 +6497,7 @@ function emitPndSignals(){
   _pndPublishComplianceFeed();
   _pndWriteComplianceBridge();               /* closed weeks only, read by VSP */
   try{ _pndWriteHuddleScoresBridge(); }catch(e){}  /* per-person huddle scores, read by VSP */
+  try{ _pndWritePeopleMapShim(); }catch(e){}       /* initials<->id map, read by VSP (pre-BOSHR) */
   var reps = myReports();
   var attention=[], exceptions=[], hardFails=0, redWeeks=0, done=0;
   var thisWeek = isoDate(mondayOf(new Date()));
@@ -10239,7 +10259,8 @@ function _pndTile(label, val, valColor, bg){
     'smb_pnd_lock_tier_v1',
     'smb_pnd_compliance_bridge_v1',
     'smb_pnd_monthly_v1',
-    'smb_pnd_huddle_scores_v1'
+    'smb_pnd_huddle_scores_v1',
+    'smb_pnd_people_map_v1'
   ];
 
   function myVersion(){
