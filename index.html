@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-25-M18';
+window.PND_BUILD = '2026-07-25-M19';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -6609,13 +6609,20 @@ window.SMB_PND_HUDDLES = {
         state.weekIso = isoDate(mondayOf(new Date()));
         _pndBuildScorecardData(person, std);
         var metrics = (scorecard && scorecard[0]) ? scorecard[0].metrics.filter(function(m){ return (m.cadence||'weekly')==='weekly'; }) : [];
-        /* Default view = Last 13 Weeks: the 13 weeks ending at the current one.
-           _pndScWeekIsos holds 52 weeks oldest-first ending at the current week,
-           and m.readings is indexed 1:1 with it, so the last 13 indices are the
-           last13 window. */
-        var n = _pndScWeekIsos.length;
+        /* Default view = Last 13 Weeks. Build the window EXACTLY like the
+           displayed totals row does (dateRanges.last13 -> lastN(13)): the window
+           ends at cur = max(last-data-index, current-week-index) and spans the 13
+           weeks cur-12..cur, NOT the raw last 13 array positions. Using the raw
+           tail offset the window by the trailing empty weeks of the 52-week
+           scaffold, so the published summary counted a different set of weeks
+           than the row displayed. */
+        var _n = _pndScWeekIsos.length;
+        var _cur = Math.max(scLastDataIdx(), scCurrentWeekIdx());
+        if(_cur > _n-1) _cur = _n-1;
+        if(_cur < 0) _cur = 0;
+        var _lo = _cur-12; if(_lo < 0) _lo = 0;
         var weeks = [];
-        for(var i=Math.max(0,n-13); i<n; i++){ weeks.push({ iso:_pndScWeekIsos[i], idx:i }); }
+        for(var i=_lo; i<=_cur; i++){ weeks.push({ iso:_pndScWeekIsos[i], idx:i }); }
         var res = _pndWeeklyScoreAggregate(personId, metrics, weeks);
         return { pct: res.pct, weeksCounted: res.weeksCounted, asOf:_asOf };
       } finally {
