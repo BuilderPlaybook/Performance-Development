@@ -1088,7 +1088,7 @@ var STORE_VER = 'v1';
    anyone having to check. Rendered in the sidebar sub-line, so it is in every
    screenshot of every page. P&D has no prior version lineage, so the stamp is
    dated rather than numbered; a numbered scheme can replace it later. */
-window.PND_BUILD = '2026-07-25-M19';
+window.PND_BUILD = '2026-07-28-M20';
 
 /* ---- AI Integration v1 ---- */
 var TEST_MODE_AI = true;
@@ -7446,13 +7446,20 @@ function renderScorecard(){
         var _pndHuddles = (typeof _pndLoadHuddles==='function') ? _pndLoadHuddles() : {};
         var _pndWeekIsos = (typeof _pndScWeekIsos!=='undefined') ? _pndScWeekIsos : [];
 
+        /* Weekly score counts WEEKLY lines only. A monthly-cadence line in the
+           same role (e.g. "Monthly Client Meeting") must not sit in the weekly
+           denominator - it has no weekly reading, so including it turned a clean
+           10-of-10 week into 10-of-11 = 91%. Filter to weekly cadence for both
+           the totals-row aggregate and the per-week cells below. */
+        var _wkMetrics = (section.metrics||[]).filter(function(_m){ return ((_m.cadence)||'weekly')==='weekly'; });
+
         /* Aggregate across the visible period via the single-source-of-truth
            scorer, so this displayed total and the VSP-published total are the
            same number. activeIdxs maps 1:1 into _pndWeekIsos, and the scorer
            reads m.readings by the same index, so the visible-week slice is
            passed straight through. */
         var _visWeeks = activeIdxs.map(function(_wi){ return { iso:_pndWeekIsos[_wi], idx:_wi }; });
-        var _aggRes = _pndWeeklyScoreAggregate(_pndScReportId, section.metrics, _visWeeks);
+        var _aggRes = _pndWeeklyScoreAggregate(_pndScReportId, _wkMetrics, _visWeeks);
         var _pndAgg = _aggRes.pct;
         var _pndAggColor = _pndAgg==null ? 'var(--txm)' : (_pndAgg>=90 ? '#16a34a' : '#dc2626');
 
@@ -7504,7 +7511,7 @@ function renderScorecard(){
             return;
           }
           var _yes=0, _hardFail=false, _total=0;
-          section.metrics.forEach(function(_mm){
+          _wkMetrics.forEach(function(_mm){
             _total++;
             var _v = _mm.readings[_wi];
             if(_pndIsYes(_v)) _yes++;
